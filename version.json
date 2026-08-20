@@ -1,6 +1,6 @@
 {
-  "v": 61,
-  "version": 61,
+  "v": 62,
+  "version": 62,
   "forceUpdate": true,
-  "note": "v61: 修复 Netlify 部署后加载屏不消失的 bug — 在 <head> 注入 CSS 动画兜底 + 内联 JS 强制 hideLoading + unhandledrejection 捕获"
+  "note": "v62: 修复 TTS 朗读（Web Speech API 优先）+ 可爱卡通图标替换 + 面试模块扩充（30题含中英答案+35条口语表达）"
 }
