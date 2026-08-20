@@ -411,8 +411,8 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 /* V34：产品行 SKU 列内的产品级折扣输入（全 SKU 统一） */
 .sp-prod-tbl .col-sku{min-width:96px}
 .sp-tb-skunum{font-weight:700;color:var(--primary)}
-.sp-prod-disc{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:6px;font-size:11px;color:var(--text-2)}
-.sp-prod-disc-item{display:flex;align-items:center;gap:4px;white-space:nowrap;width:100%;padding:3px 6px;border-radius:7px;background:var(--bg);border:1px dashed var(--border);transition:all .15s ease;cursor:pointer}
+.sp-prod-disc{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:6px;font-size:11px;color:var(--text-2);align-items:center}
+.sp-prod-disc-item{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;padding:3px 6px;border-radius:7px;background:var(--bg);border:1px dashed var(--border);transition:all .15s ease;cursor:pointer}
 .sp-prod-disc-item:hover{background:var(--primary-l);border-color:var(--primary);border-style:solid}
 .sp-prod-disc-item:hover .sp-disc-label{background:var(--card);color:var(--primary);border-color:var(--primary)}
 .sp-disc-label{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:24px;background:var(--bg-2);border:1px solid var(--border-l);border-radius:5px;font-size:12px;color:var(--text-3);font-weight:600;cursor:pointer;transition:all .15s ease}
@@ -535,6 +535,17 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 .sp-cg-item.hl .sp-cg-val{font-size:13px}
 .sp-cg-item.profit-pos .sp-cg-val{color:var(--success)}
 .sp-cg-item.profit-neg .sp-cg-val{color:var(--danger)}
+/* V64: SKU 明细流式一行（替代框框 grid） */
+.sp-cg-flow-bar{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding:4px 0}
+.sp-cg-flow{display:inline-flex;align-items:baseline;gap:3px;white-space:nowrap;font-size:11.5px}
+.sp-cg-flow .l{color:var(--text-3);font-size:10px;font-weight:500}
+.sp-cg-flow .v{color:var(--text);font-weight:600}
+.sp-cg-flow .v i{font-style:normal;color:var(--text-3);font-weight:400;font-size:10px;margin-left:2px}
+.sp-cg-flow .v .cpn{color:var(--danger);font-weight:500}
+.sp-cg-flow.hl .v{color:var(--primary)}
+.sp-cg-flow.profit-pos .v{color:var(--success);font-size:13px}
+.sp-cg-flow.profit-neg .v{color:var(--danger);font-size:13px}
+.sp-cg-flow .neg{color:var(--danger)}
 .sp-sku-calc-in{width:72px;font-size:12px;padding:2px 6px;border:1px solid var(--border-l);border-radius:6px;background:var(--card);color:var(--text);text-align:right}
 .sp-sku-calc-in:focus{outline:none;border-color:var(--primary)}
 .sp-cfg-mini{font-size:10px;color:var(--text-3);font-weight:400;cursor:help}
@@ -1698,7 +1709,7 @@ function prodSkuCount(p){return (p.skus||[]).length;}
 function prodCostSummary(p){var skus=p.skus||[];if(!skus.length)return {min:p.cost||0,max:p.cost||0,avg:p.cost||0};var arr=skus.map(function(s){return parseFloat(s.cost)||0;});return {min:Math.min.apply(null,arr),max:Math.max.apply(null,arr),avg:Math.round(arr.reduce(function(a,b){return a+b;},0)/arr.length*100)/100};}
 function prodWeightSummary(p){var skus=p.skus||[];if(!skus.length)return {min:p.weight||0,max:p.weight||0};var arr=skus.map(function(s){return parseFloat(s.weight)||0;});return {min:Math.min.apply(null,arr),max:Math.max.apply(null,arr)};}
 function prodStatusBadge(s){if(s==='on')return '<span class="sp-badge sp-badge-on">🟢 上架中</span>';if(s==='off')return '<span class="sp-badge sp-badge-off">⏸ 已下架</span>';return '<span class="sp-badge sp-badge-draft">📝 草稿</span>';}
-// V64: 产品列表定价预览 — 分 SKU 展示各站点售价/折扣/折后价/利润 + 底部上架日期
+// V64: 产品列表定价预览 — 每个 SKU 一行（规格名 + 各站点价格同行）
 function renderProductPricePreview(p){
   var sites=calcSitesEnabled();
   if(!sites.length)return '';
@@ -1713,16 +1724,12 @@ function renderProductPricePreview(p){
       if(!base)return '<span class="sp-pp-cell"><b>'+s.name+'</b> <span style="color:var(--text-3)">—</span></span>';
       var c=calcSkuSite(sk,s.id,disc);
       var profCls=c.profit>=0?'pos':'neg';
-      var html='<span class="sp-pp-cell" title="'+s.name+': 原价 '+s.symbol+fmtNum(base)+' → 折后 '+s.symbol+fmtNum(c.finalLocal)+' ('+disc+'%折) 利润 ¥'+fmtNum(c.profit)+'"><b>'+s.name+'</b> '+s.symbol+fmtNum(base);
+      var html='<span class="sp-pp-cell" title="'+s.name+': 原价 '+s.symbol+fmtNum(base)+' → 折后 '+s.symbol+fmtNum(c.finalLocal)+' ('+disc+'%折) 利润 ¥'+fmtNum(c.profit)+'"><b>'+s.name+'</b>'+s.symbol+fmtNum(base);
       if(disc>0)html+='→<b class="sp-pp-final">'+s.symbol+fmtNum(c.finalLocal)+'</b>('+disc+'%)';
       html+=' <span class="sp-pp-profit '+profCls+'">¥'+fmtNum(c.profit)+'</span></span>';
       return html;
     }).join('');
-    var discLine=sites.map(function(s){
-      var d=prodDisc(p,s.id);
-      return '<b>'+s.name+'</b><span class="sp-pp-disc-val">'+(d>0?d+'%':'—')+'</span>';
-    }).join('<span style="color:var(--text-3);margin:0 4px">·</span>');
-    return '<div class="sp-pp-sku-line"><div class="sp-pp-sku-block"><span class="sp-pp-sku-name">'+escapeHtml(skuName)+'</span><span class="sp-pp-sku-disc">折 '+discLine+'</span></div>'+siteCells+'</div>';
+    return '<div class="sp-pp-sku-line"><span class="sp-pp-sku-name">'+escapeHtml(skuName)+'</span>'+siteCells+'</div>';
   }).join('');
   var dateLine='';
   sites.forEach(function(s){
@@ -1751,12 +1758,9 @@ function renderProductGrid(){
     var actions='<button class="act-btn" data-act="toggle" title="展开/收起">'+arrow+'</button><button class="act-btn" data-act="edit">✏️</button><button class="act-btn" data-act="copy" title="复制产品">📋</button><button class="act-btn danger" data-act="del">🗑️</button>'+(p.link?'<a class="act-btn" href="'+escapeAttr(p.link)+'" target="_blank">🔗</a>':'');
     var fullT=escapeHtml(p.title||p.name);
     var titleWrap='<div class="sp-tb-title-wrap"><div class="sp-tb-title" title="'+escapeAttr(p.title||p.name)+'">'+fullT+'</div><button class="act-btn" data-act="expandTitle" title="展开完整标题">📄</button><button class="act-btn" data-act="copyTitle" title="复制标题">📋</button></div>';
-    return '<tr data-pid="'+p.id+'" class="sp-main-row'+(exp?' exp':'')+'"><td class="num col-idx">'+(idx+1)+'</td><td class="col-img">'+img+'</td><td class="col-title">'+titleWrap+(p.title&&p.title!==p.name?'<div class="sp-tb-sub">'+escapeHtml(p.name)+'</div>':'')+renderProductPricePreview(p)+'</td><td class="col-cat">'+(p.category?escapeHtml(p.category):'<span style="color:var(--text-3)">—</span>')+'</td><td class="col-sku"><div class="sp-tb-skunum">'+skuN+'</div>'+prodDiscInputs(p)+'</td><td class="col-status">'+prodStatusBadge(p.status)+'</td><td class="col-act">'+actions+'</td></tr>'+
+    return '<tr data-pid="'+p.id+'" class="sp-main-row'+(exp?' exp':'')+'"><td class="num col-idx">'+(idx+1)+'</td><td class="col-img">'+img+'</td><td class="col-title">'+titleWrap+(p.title&&p.title!==p.name?'<div class="sp-tb-sub">'+escapeHtml(p.name)+'</div>':'')+prodDiscInputs(p)+renderProductPricePreview(p)+'</td><td class="col-cat">'+(p.category?escapeHtml(p.category):'<span style="color:var(--text-3)">—</span>')+'</td><td class="col-sku"><div class="sp-tb-skunum">'+skuN+'</div></td><td class="col-status">'+prodStatusBadge(p.status)+'</td><td class="col-act">'+actions+'</td></tr>'+
       '<tr class="sp-detail-row'+(exp?' open':'')+'" data-pid="'+p.id+'"><td colspan="7"><div class="sp-detail-wrap">'+
-        '<div class="sp-detail-grid">'+
-          '<div class="sp-detail-col"><div class="sp-detail-title">🌏 各站点上架明细</div>'+renderSiteListDetail(p)+'</div>'+
-          '<div class="sp-detail-col"><div class="sp-detail-title">💸 成本 / 重量</div>'+prodCostWeightHtml(p)+'</div>'+
-        '</div>'+
+        '<div class="sp-detail-title">💸 成本 / 重量</div>'+prodCostWeightHtml(p)+
         '<div class="sp-detail-title" style="margin-top:10px">🔢 SKU 明细（'+skuN+'）</div>'+
         renderSkuDetailTable(p)+
       '</div></td></tr>';
@@ -1945,17 +1949,14 @@ function renderSkuCalcResults(p,sk,si,sid){
   var profitCls=r.profit>=0?'profit-pos':'profit-neg';
   var cpnTxt='-'+s.symbol+fmtNum(r.coupon);
   if(r.appliedRule)cpnTxt+='<small class="cpn">满'+fmtNum(r.appliedRule.min)+'减'+fmtNum(r.appliedRule.off)+'</small>';
-  if(r.couponRules&&r.couponRules.length>1)cpnTxt+='<small class="sp-cfg-mini" title="'+escapeAttr(fmtCouponRules(r.couponRules))+'">全部规则</small>';
-  function g(label,val,extra){return '<div class="sp-cg-item'+(extra?' '+extra:'')+'"><label>'+label+'</label><div class="sp-cg-val">'+val+'</div></div>';}
+  function g(label,val,extra){return '<span class="sp-cg-flow'+(extra?' '+extra:'')+'"><span class="l">'+label+'</span><span class="v">'+val+'</span></span>';}
   return '<div class="sp-sku-calc-site-res" id="skuCalcRes_'+p.id+'_'+si+'_'+sid+'">'+
-    '<div class="sp-sku-calc-grid">'+
-      g('藏价',s.symbol+fmtNum(r.hide)+(cfg.hide?'<span class="sp-cfg-mini" title="'+escapeAttr(cfg.hide)+'">公式</span>':''))+
-      g('藏价 ¥','¥'+fmtNum(r.hideCny))+
-      g('佣金（'+r.commission+'%）',s.symbol+fmtNum(r.commLocal)+'<i>¥'+fmtNum(r.commCny)+'</i>')+
-      g('成本（'+s.currency+'）',s.symbol+fmtNum(r.cost/r.rate)+'<i>¥'+fmtNum(r.cost)+'</i>')+
-      g('原价 ¥','¥'+fmtNum(r.base*r.rate))+
-      g('折后价',s.symbol+fmtNum(r.discPrice))+
-      g('折后 ¥','¥'+fmtNum(r.discPrice*r.rate))+
+    '<div class="sp-cg-flow-bar">'+
+      g('藏价',s.symbol+fmtNum(r.hide))+
+      g('藏价¥','¥'+fmtNum(r.hideCny))+
+      g('佣金('+r.commission+'%)',s.symbol+fmtNum(r.commLocal)+'<i>¥'+fmtNum(r.commCny)+'</i>')+
+      g('成本',s.symbol+fmtNum(r.cost/r.rate)+'<i>¥'+fmtNum(r.cost)+'</i>')+
+      g('折后',s.symbol+fmtNum(r.discPrice)+'<i>¥'+fmtNum(r.discPrice*r.rate)+'</i>')+
       g('优惠券','<span class="'+(r.coupon>0?'neg':'')+'">'+cpnTxt+'</span>')+
       g('实付',s.symbol+fmtNum(r.finalLocal)+'<i>¥'+fmtNum(r.finalCny)+'</i>')+
       g('毛利率',fmtNum(r.margin)+'%')+
