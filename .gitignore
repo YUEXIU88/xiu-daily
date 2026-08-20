@@ -1,0 +1,17 @@
+# dev helper scripts (not part of the published site)
+assets_v55.py
+extend_content.py
+extend_data.py
+make_icons.py
+patch_v55.py
+build.js
+产品导入模板.csv
+
+# temp / scratch files
+_*.js
+_*.py
+*.log
+
+# os junk
+.DS_Store
+Thumbs.db
