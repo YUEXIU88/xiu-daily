@@ -1,6 +1,6 @@
 {
-  "v": 66,
-  "version": 66,
+  "v": 67,
+  "version": 67,
   "forceUpdate": true,
-  "note": "v66: 产品列表布局重构——图片放大72px置于左上角/序号移到图片上方/标题完整一行不截断/右侧只保留一个复制按钮/SKU价格行左对齐到图片边缘"
+  "note": "v67: 修复计算气泡查找bug(parentElement.querySelector→nextElementSibling) + 防抖保存150ms + saveData去掉img避免配额不足 + 折后价本地货币+人民币+利润气泡 + pagehide强制保存"
 }
