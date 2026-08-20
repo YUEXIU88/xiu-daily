@@ -445,19 +445,6 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 .sp-detail-row>td{padding:0!important;background:var(--bg)}
 .sp-detail-wrap{max-height:0;overflow:hidden;transition:max-height .35s ease;padding:0 12px}
 .sp-detail-row.open .sp-detail-wrap{max-height:1200px;padding:12px}
-/* V64: 产品列表定价预览 pill */
-.sp-pp-bar{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
-.sp-pp-pill{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;background:var(--bg);border:1px solid var(--border-l);border-radius:6px;padding:2px 6px;white-space:nowrap;line-height:1.4}
-.sp-pp-pill .sp-pp-site{font-weight:600;color:var(--text)}
-.sp-pp-pill .sp-pp-final{color:var(--primary);font-weight:600}
-.sp-pp-pill .sp-pp-profit.pos{color:#2ea043}
-.sp-pp-pill .sp-pp-profit.neg{color:#d9534f}
-.sp-pp-pill .sp-pp-date{color:var(--text-3);font-size:10px}
-/* V64: 订单详情展开网格 */
-.sp-ord-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;padding:10px;background:var(--bg);border-radius:10px;margin-top:6px}
-.sp-ord-dgroup{background:var(--card);border:1px solid var(--border-l);border-radius:8px;padding:8px 10px}
-.sp-ord-dtitle{font-size:12px;font-weight:600;color:var(--text);margin-bottom:5px}
-.sp-ord-dline{font-size:11.5px;color:var(--text-2);padding:2px 0;line-height:1.4}
 .sp-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:700px){.sp-detail-grid{grid-template-columns:1fr}}
 .sp-detail-col{background:var(--card);border:1px solid var(--border-l);border-radius:12px;padding:10px}
@@ -1211,7 +1198,7 @@ var SITE_CALC_DEFAULT={
   id:{hide:'',commission:5,rate:0.00045,coupon:0,enabled:false}
 };
 var periodCalDate=new Date();
-var APP_VERSION=64;
+var APP_VERSION=63;
 var DEFAULT_BUCKET='U95Cb8XrEnnDPjLyvCoYBo';
 var syncBucketId='',syncTimer=null,syncing=false,syncDirty=false;
 var studyLog=[],srsData={},mistakes=[],achievements=[],dailyState={};
@@ -1692,44 +1679,6 @@ function prodSkuCount(p){return (p.skus||[]).length;}
 function prodCostSummary(p){var skus=p.skus||[];if(!skus.length)return {min:p.cost||0,max:p.cost||0,avg:p.cost||0};var arr=skus.map(function(s){return parseFloat(s.cost)||0;});return {min:Math.min.apply(null,arr),max:Math.max.apply(null,arr),avg:Math.round(arr.reduce(function(a,b){return a+b;},0)/arr.length*100)/100};}
 function prodWeightSummary(p){var skus=p.skus||[];if(!skus.length)return {min:p.weight||0,max:p.weight||0};var arr=skus.map(function(s){return parseFloat(s.weight)||0;});return {min:Math.min.apply(null,arr),max:Math.max.apply(null,arr)};}
 function prodStatusBadge(s){if(s==='on')return '<span class="sp-badge sp-badge-on">🟢 上架中</span>';if(s==='off')return '<span class="sp-badge sp-badge-off">⏸ 已下架</span>';return '<span class="sp-badge sp-badge-draft">📝 草稿</span>';}
-// V64: 产品列表定价预览 — 每个启用站点一个 pill，紧凑显示原价→折后价(折扣%) + 利润 + 上架日期
-function renderProductPricePreview(p){
-  var sites=calcSitesEnabled();
-  if(!sites.length)return '';
-  var skus=p.skus||[];
-  if(!skus.length)return '';
-  var pills=sites.map(function(s){
-    var calcs=skus.map(function(sk){
-      var pr=(sk.price&&sk.price[s.id])||{};
-      var base=parseFloat(pr.base)||0;
-      if(!base)return null;
-      var disc=prodDisc(p,s.id);
-      var c=calcSkuSite(sk,s.id,disc);
-      return {base:base,disc:disc,c:c};
-    }).filter(function(x){return x;});
-    if(!calcs.length)return '';
-    var bases=calcs.map(function(x){return x.base;});
-    var finals=calcs.map(function(x){return x.c.finalLocal;});
-    var profits=calcs.map(function(x){return x.c.profit;});
-    var disc=calcs[0].disc;
-    var minB=Math.min.apply(null,bases),maxB=Math.max.apply(null,bases);
-    var minF=Math.min.apply(null,finals),maxF=Math.max.apply(null,finals);
-    var minP=Math.min.apply(null,profits),maxP=Math.max.apply(null,profits);
-    var baseStr=minB===maxB?s.symbol+fmtNum(minB):s.symbol+fmtNum(minB)+'~'+fmtNum(maxB);
-    var finalStr=minF===maxF?s.symbol+fmtNum(minF):s.symbol+fmtNum(minF)+'~'+fmtNum(maxF);
-    var profCls=(minP+maxP)/2>=0?'pos':'neg';
-    var profStr=minP===maxP?'¥'+fmtNum(minP):'¥'+fmtNum(minP)+'~'+fmtNum(maxP);
-    var dd=p.listed&&p.listed[s.id]?(' · 📅'+String(p.listed[s.id]).slice(5)):'';
-    var html='<span class="sp-pp-pill" title="'+s.name+'：原价 '+baseStr+' → '+finalStr+'（'+disc+'%折）· 利润 '+profStr+' CNY'+dd+'"><span class="sp-pp-site">'+s.name+'</span> '+baseStr;
-    if(disc>0)html+='→<span class="sp-pp-final">'+finalStr+'</span>('+disc+'%)';
-    html+=' <span class="sp-pp-profit '+profCls+'">'+profStr+'</span>';
-    if(dd)html+='<span class="sp-pp-date">'+dd+'</span>';
-    html+='</span>';
-    return html;
-  }).join('');
-  if(!pills.trim())return '';
-  return '<div class="sp-pp-bar">'+pills+'</div>';
-}
 function renderProductGrid(){
   var el=$('spProdGrid');if(!el)return;
   var q='';var si=$('spProdSearch');if(si)q=si.value.toLowerCase();
@@ -1745,7 +1694,7 @@ function renderProductGrid(){
     var actions='<button class="act-btn" data-act="toggle" title="展开/收起">'+arrow+'</button><button class="act-btn" data-act="edit">✏️</button><button class="act-btn" data-act="copy" title="复制产品">📋</button><button class="act-btn danger" data-act="del">🗑️</button>'+(p.link?'<a class="act-btn" href="'+escapeAttr(p.link)+'" target="_blank">🔗</a>':'');
     var fullT=escapeHtml(p.title||p.name);
     var titleWrap='<div class="sp-tb-title-wrap"><div class="sp-tb-title" title="'+escapeAttr(p.title||p.name)+'">'+fullT+'</div><button class="act-btn" data-act="expandTitle" title="展开完整标题">📄</button><button class="act-btn" data-act="copyTitle" title="复制标题">📋</button></div>';
-    return '<tr data-pid="'+p.id+'" class="sp-main-row'+(exp?' exp':'')+'"><td class="num col-idx">'+(idx+1)+'</td><td class="col-img">'+img+'</td><td class="col-title">'+titleWrap+(p.title&&p.title!==p.name?'<div class="sp-tb-sub">'+escapeHtml(p.name)+'</div>':'')+renderProductPricePreview(p)+'</td><td class="col-cat">'+(p.category?escapeHtml(p.category):'<span style="color:var(--text-3)">—</span>')+'</td><td class="col-sku"><div class="sp-tb-skunum">'+skuN+'</div>'+prodDiscInputs(p)+'</td><td class="col-status">'+prodStatusBadge(p.status)+'</td><td class="col-act">'+actions+'</td></tr>'+
+    return '<tr data-pid="'+p.id+'" class="sp-main-row'+(exp?' exp':'')+'"><td class="num col-idx">'+(idx+1)+'</td><td class="col-img">'+img+'</td><td class="col-title">'+titleWrap+(p.title&&p.title!==p.name?'<div class="sp-tb-sub">'+escapeHtml(p.name)+'</div>':'')+'</td><td class="col-cat">'+(p.category?escapeHtml(p.category):'<span style="color:var(--text-3)">—</span>')+'</td><td class="col-sku"><div class="sp-tb-skunum">'+skuN+'</div>'+prodDiscInputs(p)+'</td><td class="col-status">'+prodStatusBadge(p.status)+'</td><td class="col-act">'+actions+'</td></tr>'+
       '<tr class="sp-detail-row'+(exp?' open':'')+'" data-pid="'+p.id+'"><td colspan="7"><div class="sp-detail-wrap">'+
         '<div class="sp-detail-grid">'+
           '<div class="sp-detail-col"><div class="sp-detail-title">🌏 各站点上架明细</div>'+renderSiteListDetail(p)+'</div>'+
