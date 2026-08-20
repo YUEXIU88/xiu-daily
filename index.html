@@ -448,7 +448,11 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 /* V64: 产品列表定价预览 — per-SKU per-site */
 .sp-pp-bar{margin-top:5px;display:flex;flex-direction:column;gap:3px}
 .sp-pp-sku-line{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:10.5px;line-height:1.5}
-.sp-pp-sku-name{font-weight:600;color:var(--text-2);min-width:36px;white-space:nowrap;background:var(--bg-2);border-radius:4px;padding:1px 5px;font-size:10px;max-width:80px;overflow:hidden;text-overflow:ellipsis}
+.sp-pp-sku-name{font-weight:600;color:var(--text);font-size:11.5px;line-height:1.3;display:block}
+.sp-pp-sku-disc{font-size:9.5px;color:var(--text-3);margin-top:1px;line-height:1.3}
+.sp-pp-sku-disc b{color:var(--text-2);font-weight:500;margin-right:2px}
+.sp-pp-sku-disc .sp-pp-disc-val{color:var(--primary)}
+.sp-pp-sku-block{flex:0 0 auto;min-width:170px;max-width:200px;padding-right:6px;border-right:1px dashed var(--border-l);margin-right:2px}
 .sp-pp-cell{display:inline-flex;align-items:center;gap:2px;background:var(--bg);border:1px solid var(--border-l);border-radius:5px;padding:1px 5px;white-space:nowrap}
 .sp-pp-cell .sp-pp-final{color:var(--primary);font-weight:600}
 .sp-pp-cell .sp-pp-profit.pos{color:#2ea043}
@@ -1714,7 +1718,11 @@ function renderProductPricePreview(p){
       html+=' <span class="sp-pp-profit '+profCls+'">¥'+fmtNum(c.profit)+'</span></span>';
       return html;
     }).join('');
-    return '<div class="sp-pp-sku-line"><span class="sp-pp-sku-name">'+escapeHtml(skuName)+'</span>'+siteCells+'</div>';
+    var discLine=sites.map(function(s){
+      var d=prodDisc(p,s.id);
+      return '<b>'+s.name+'</b><span class="sp-pp-disc-val">'+(d>0?d+'%':'—')+'</span>';
+    }).join('<span style="color:var(--text-3);margin:0 4px">·</span>');
+    return '<div class="sp-pp-sku-line"><div class="sp-pp-sku-block"><span class="sp-pp-sku-name">'+escapeHtml(skuName)+'</span><span class="sp-pp-sku-disc">折 '+discLine+'</span></div>'+siteCells+'</div>';
   }).join('');
   var dateLine='';
   sites.forEach(function(s){
