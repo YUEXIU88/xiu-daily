@@ -403,13 +403,20 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 /* ===== Shopee Module ===== */
 .sp-product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .sp-prod-stats{font-size:13px;color:var(--text-2);margin:0 0 10px;padding:9px 14px;background:var(--primary-l);border-radius:12px;font-weight:500}
-.sp-tb-img{width:44px;height:44px;object-fit:cover;border-radius:8px;display:block}
-.sp-tb-img.ph{background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text-3)}
-.sp-tb-title-wrap{display:flex;align-items:center;gap:4px;max-width:260px}
-.sp-tb-title{font-weight:600;font-size:13px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
-.sp-tb-sub{font-size:11px;color:var(--text-3)}
+.sp-tb-img{width:72px;height:72px;object-fit:cover;border-radius:10px;display:block;border:1px solid var(--border-l);background:var(--bg)}
+.sp-tb-img.ph{background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--text-3)}
+.sp-tb-img-wrap{padding:4px;background:var(--card);border-radius:12px;border:1px solid var(--border-l);display:inline-block}
+.sp-tb-idx{font-size:11px;color:var(--text-2);font-weight:700;text-align:center;margin-bottom:4px;background:var(--primary-l);color:var(--primary);border-radius:10px;padding:1px 0;letter-spacing:.5px}
+.sp-tb-title-wrap{display:flex;align-items:center;gap:6px;width:100%}
+.sp-tb-title{font-weight:700;font-size:13.5px;line-height:1.4;white-space:nowrap;overflow:visible;color:var(--text);flex:1;min-width:0}
+.sp-tb-title-copy{flex:0 0 auto;background:var(--primary-l);border:1px solid var(--primary);color:var(--primary);border-radius:7px;padding:3px 8px;font-size:12px;cursor:pointer;font-weight:600;transition:all .15s ease}
+.sp-tb-title-copy:hover{background:var(--primary);color:#fff}
+.sp-tb-sub{font-size:11px;color:var(--text-3);margin-top:1px}
 /* V34：产品行 SKU 列内的产品级折扣输入（全 SKU 统一） */
-.sp-prod-tbl .col-sku{min-width:96px}
+.sp-prod-tbl .col-img{vertical-align:top;width:90px;padding-top:6px;padding-left:10px;padding-right:6px}
+.sp-prod-tbl .col-title{vertical-align:top;padding-top:4px;padding-left:4px}
+.sp-prod-tbl .col-sku{min-width:64px}
+.sp-pp-bar{margin-top:6px;margin-left:0;padding-left:0;display:flex;flex-direction:column;gap:4px}
 .sp-tb-skunum{font-weight:700;color:var(--primary)}
 .sp-prod-disc{display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:6px;font-size:11px;color:var(--text-2);align-items:center}
 .sp-prod-disc-item{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;padding:3px 6px;border-radius:7px;background:var(--bg);border:1px dashed var(--border);transition:all .15s ease;cursor:pointer}
@@ -448,7 +455,7 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 /* V64: 产品列表定价预览 — per-SKU per-site */
 .sp-pp-bar{margin-top:5px;display:flex;flex-direction:column;gap:3px}
 .sp-pp-sku-line{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:10.5px;line-height:1.5}
-.sp-pp-sku-name{font-weight:600;color:var(--text);font-size:11.5px;line-height:1.4;display:inline-block;max-width:280px;overflow-wrap:anywhere;padding-right:6px;border-right:1px dashed var(--border-l);margin-right:2px}
+.sp-pp-sku-name{font-weight:600;color:var(--text);font-size:11.5px;line-height:1.4;display:inline-block;max-width:none;overflow-wrap:normal;padding-right:8px;border-right:1px dashed var(--border-l);margin-right:4px;white-space:nowrap}
 .sp-pp-sku-disc{font-size:9.5px;color:var(--text-3);margin-top:1px;line-height:1.3}
 .sp-pp-sku-disc b{color:var(--text-2);font-weight:500;margin-right:2px}
 .sp-pp-sku-disc .sp-pp-disc-val{color:var(--primary)}
@@ -1235,7 +1242,7 @@ var SITE_CALC_DEFAULT={
   id:{hide:'',commission:5,rate:0.00045,coupon:0,enabled:false}
 };
 var periodCalDate=new Date();
-var APP_VERSION=65;
+var APP_VERSION=66;
 var DEFAULT_BUCKET='U95Cb8XrEnnDPjLyvCoYBo';
 var syncBucketId='',syncTimer=null,syncing=false,syncDirty=false;
 var studyLog=[],srsData={},mistakes=[],achievements=[],dailyState={};
@@ -1771,17 +1778,18 @@ function renderProductGrid(){
   var list=spProducts.filter(function(p){return !q||p.name.toLowerCase().indexOf(q)!==-1||(p.supplier||'').toLowerCase().indexOf(q)!==-1||(p.title||'').toLowerCase().indexOf(q)!==-1||(p.category||'').toLowerCase().indexOf(q)!==-1||(p.skus||[]).some(function(s){return (s.skuNo||'').toLowerCase().indexOf(q)!==-1||(s.name||'').toLowerCase().indexOf(q)!==-1||(s.enName||'').toLowerCase().indexOf(q)!==-1;});});
   var statsEl=$('spProdStats');if(statsEl){var nNew=0,nOld=0,nOn=0,nSku=0;list.forEach(function(p){var d=prodNewOld(p);if(d!==null&&d<=30)nNew++;else if(d!==null&&d>30)nOld++;if(p.status==='on')nOn++;nSku+=(p.skus||[]).length;});statsEl.innerHTML='📦 共 <b>'+list.length+'</b> 个产品 · 🔢 SKU <b>'+nSku+'</b> 个 · 🆕 新品 <b style="color:var(--success)">'+nNew+'</b> · 🏷 老品 <b style="color:var(--danger)">'+nOld+'</b> · 🟢 上架中 <b>'+nOn+'</b>';}
   if(list.length===0){el.innerHTML='<div class="empty-state"><div class="empty-state-icon">📦</div><p>还没有产品</p><p style="font-size:13px;color:var(--text-3)">点击「添加产品」或「批量导入」开始</p></div>';return;}
-  var head='<thead><tr><th class="col-idx">#</th><th class="col-img">图片</th><th class="col-title">上架标题 / 产品名</th><th class="col-cat">类目</th><th class="col-sku">SKU</th><th class="col-status">状态</th><th class="col-act">操作</th></tr></thead>';
+  var head='<thead><tr><th class="col-img" style="width:90px">图片</th><th class="col-title">上架标题 / 产品名</th><th class="col-cat">类目</th><th class="col-sku">SKU</th><th class="col-status">状态</th><th class="col-act">操作</th></tr></thead>';
   var body='<tbody>'+list.map(function(p,idx){
-    var img=p.img?'<img class="sp-tb-img" src="'+escapeAttr(p.img)+'" onerror="this.style.display=\'none\'">':'<div class="sp-tb-img ph">📦</div>';
+    var imgCore=p.img?'<img class="sp-tb-img" src="'+escapeAttr(p.img)+'" onerror="this.style.display=\'none\'">':'<div class="sp-tb-img ph">📦</div>';
+    var img='<div class="sp-tb-idx">#'+(idx+1)+'</div><div class="sp-tb-img-wrap">'+imgCore+'</div>';
     var skuN=prodSkuCount(p);
     var exp=!!prodExpanded[p.id];
     var arrow=exp?'▾':'▸';
     var actions='<button class="act-btn" data-act="toggle" title="展开/收起">'+arrow+'</button><button class="act-btn" data-act="edit">✏️</button><button class="act-btn" data-act="copy" title="复制产品">📋</button><button class="act-btn danger" data-act="del">🗑️</button>'+(p.link?'<a class="act-btn" href="'+escapeAttr(p.link)+'" target="_blank">🔗</a>':'');
     var fullT=escapeHtml(p.title||p.name);
-    var titleWrap='<div class="sp-tb-title-wrap"><div class="sp-tb-title" title="'+escapeAttr(p.title||p.name)+'">'+fullT+'</div><button class="act-btn" data-act="expandTitle" title="展开完整标题">📄</button><button class="act-btn" data-act="copyTitle" title="复制标题">📋</button></div>';
-    return '<tr data-pid="'+p.id+'" class="sp-main-row'+(exp?' exp':'')+'"><td class="num col-idx">'+(idx+1)+'</td><td class="col-img">'+img+'</td><td class="col-title">'+titleWrap+(p.title&&p.title!==p.name?'<div class="sp-tb-sub">'+escapeHtml(p.name)+'</div>':'')+prodDiscInputs(p)+renderProductPricePreview(p)+'</td><td class="col-cat">'+(p.category?escapeHtml(p.category):'<span style="color:var(--text-3)">—</span>')+'</td><td class="col-sku"><div class="sp-tb-skunum">'+skuN+'</div></td><td class="col-status">'+prodStatusBadge(p.status)+'</td><td class="col-act">'+actions+'</td></tr>'+
-      '<tr class="sp-detail-row'+(exp?' open':'')+'" data-pid="'+p.id+'"><td colspan="7"><div class="sp-detail-wrap">'+
+    var titleWrap='<div class="sp-tb-title-wrap"><div class="sp-tb-title" title="'+escapeAttr(p.title||p.name)+'">'+fullT+'</div><button class="sp-tb-title-copy" data-act="copyTitle" title="复制标题到剪贴板">📋 复制</button></div>';
+    return '<tr data-pid="'+p.id+'" class="sp-main-row'+(exp?' exp':'')+'"><td class="col-img">'+img+'</td><td class="col-title">'+titleWrap+(p.title&&p.title!==p.name?'<div class="sp-tb-sub">'+escapeHtml(p.name)+'</div>':'')+prodDiscInputs(p)+renderProductPricePreview(p)+'</td><td class="col-cat">'+(p.category?escapeHtml(p.category):'<span style="color:var(--text-3)">—</span>')+'</td><td class="col-sku"><div class="sp-tb-skunum">'+skuN+'</div></td><td class="col-status">'+prodStatusBadge(p.status)+'</td><td class="col-act">'+actions+'</td></tr>'+
+      '<tr class="sp-detail-row'+(exp?' open':'')+'" data-pid="'+p.id+'"><td colspan="6"><div class="sp-detail-wrap">'+
         '<div class="sp-detail-title">💸 成本 / 重量</div>'+prodCostWeightHtml(p)+
         '<div class="sp-detail-title" style="margin-top:10px">🔢 SKU 明细（'+skuN+'）</div>'+
         renderSkuDetailTable(p)+

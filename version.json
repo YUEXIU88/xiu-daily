@@ -1,6 +1,6 @@
 {
-  "v": 65,
-  "version": 65,
+  "v": 66,
+  "version": 66,
   "forceUpdate": true,
-  "note": "v65: 折叠按钮只点▸才展开(取消整行点击) + 利润气泡化+折扣标签 + sp-pp-price-in stopPropagation输入不丢焦点 + 主行cash cell轻量更新"
+  "note": "v66: 产品列表布局重构——图片放大72px置于左上角/序号移到图片上方/标题完整一行不截断/右侧只保留一个复制按钮/SKU价格行左对齐到图片边缘"
 }
