@@ -445,14 +445,16 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 .sp-detail-row>td{padding:0!important;background:var(--bg)}
 .sp-detail-wrap{max-height:0;overflow:hidden;transition:max-height .35s ease;padding:0 12px}
 .sp-detail-row.open .sp-detail-wrap{max-height:1200px;padding:12px}
-/* V64: 产品列表定价预览 pill */
-.sp-pp-bar{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
-.sp-pp-pill{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;background:var(--bg);border:1px solid var(--border-l);border-radius:6px;padding:2px 6px;white-space:nowrap;line-height:1.4}
-.sp-pp-pill .sp-pp-site{font-weight:600;color:var(--text)}
-.sp-pp-pill .sp-pp-final{color:var(--primary);font-weight:600}
-.sp-pp-pill .sp-pp-profit.pos{color:#2ea043}
-.sp-pp-pill .sp-pp-profit.neg{color:#d9534f}
-.sp-pp-pill .sp-pp-date{color:var(--text-3);font-size:10px}
+/* V64: 产品列表定价预览 — per-SKU per-site */
+.sp-pp-bar{margin-top:5px;display:flex;flex-direction:column;gap:3px}
+.sp-pp-sku-line{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:10.5px;line-height:1.5}
+.sp-pp-sku-name{font-weight:600;color:var(--text-2);min-width:36px;white-space:nowrap;background:var(--bg-2);border-radius:4px;padding:1px 5px;font-size:10px;max-width:80px;overflow:hidden;text-overflow:ellipsis}
+.sp-pp-cell{display:inline-flex;align-items:center;gap:2px;background:var(--bg);border:1px solid var(--border-l);border-radius:5px;padding:1px 5px;white-space:nowrap}
+.sp-pp-cell .sp-pp-final{color:var(--primary);font-weight:600}
+.sp-pp-cell .sp-pp-profit.pos{color:#2ea043}
+.sp-pp-cell .sp-pp-profit.neg{color:#d9534f}
+.sp-pp-date-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10px;color:var(--text-3);margin-top:2px;padding-top:2px;border-top:1px dashed var(--border-l)}
+.sp-pp-date-cell{white-space:nowrap}
 /* V64: 订单详情展开网格 */
 .sp-ord-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;padding:10px;background:var(--bg);border-radius:10px;margin-top:6px}
 .sp-ord-dgroup{background:var(--card);border:1px solid var(--border-l);border-radius:8px;padding:8px 10px}
@@ -1692,43 +1694,39 @@ function prodSkuCount(p){return (p.skus||[]).length;}
 function prodCostSummary(p){var skus=p.skus||[];if(!skus.length)return {min:p.cost||0,max:p.cost||0,avg:p.cost||0};var arr=skus.map(function(s){return parseFloat(s.cost)||0;});return {min:Math.min.apply(null,arr),max:Math.max.apply(null,arr),avg:Math.round(arr.reduce(function(a,b){return a+b;},0)/arr.length*100)/100};}
 function prodWeightSummary(p){var skus=p.skus||[];if(!skus.length)return {min:p.weight||0,max:p.weight||0};var arr=skus.map(function(s){return parseFloat(s.weight)||0;});return {min:Math.min.apply(null,arr),max:Math.max.apply(null,arr)};}
 function prodStatusBadge(s){if(s==='on')return '<span class="sp-badge sp-badge-on">🟢 上架中</span>';if(s==='off')return '<span class="sp-badge sp-badge-off">⏸ 已下架</span>';return '<span class="sp-badge sp-badge-draft">📝 草稿</span>';}
-// V64: 产品列表定价预览 — 每个启用站点一个 pill，紧凑显示原价→折后价(折扣%) + 利润 + 上架日期
+// V64: 产品列表定价预览 — 分 SKU 展示各站点售价/折扣/折后价/利润 + 底部上架日期
 function renderProductPricePreview(p){
   var sites=calcSitesEnabled();
   if(!sites.length)return '';
   var skus=p.skus||[];
   if(!skus.length)return '';
-  var pills=sites.map(function(s){
-    var calcs=skus.map(function(sk){
+  var lines=skus.map(function(sk,si){
+    var skuName=sk.name||('SKU'+(si+1));
+    var siteCells=sites.map(function(s){
       var pr=(sk.price&&sk.price[s.id])||{};
       var base=parseFloat(pr.base)||0;
-      if(!base)return null;
       var disc=prodDisc(p,s.id);
+      if(!base)return '<span class="sp-pp-cell"><b>'+s.name+'</b> <span style="color:var(--text-3)">—</span></span>';
       var c=calcSkuSite(sk,s.id,disc);
-      return {base:base,disc:disc,c:c};
-    }).filter(function(x){return x;});
-    if(!calcs.length)return '';
-    var bases=calcs.map(function(x){return x.base;});
-    var finals=calcs.map(function(x){return x.c.finalLocal;});
-    var profits=calcs.map(function(x){return x.c.profit;});
-    var disc=calcs[0].disc;
-    var minB=Math.min.apply(null,bases),maxB=Math.max.apply(null,bases);
-    var minF=Math.min.apply(null,finals),maxF=Math.max.apply(null,finals);
-    var minP=Math.min.apply(null,profits),maxP=Math.max.apply(null,profits);
-    var baseStr=minB===maxB?s.symbol+fmtNum(minB):s.symbol+fmtNum(minB)+'~'+fmtNum(maxB);
-    var finalStr=minF===maxF?s.symbol+fmtNum(minF):s.symbol+fmtNum(minF)+'~'+fmtNum(maxF);
-    var profCls=(minP+maxP)/2>=0?'pos':'neg';
-    var profStr=minP===maxP?'¥'+fmtNum(minP):'¥'+fmtNum(minP)+'~'+fmtNum(maxP);
-    var dd=p.listed&&p.listed[s.id]?(' · 📅'+String(p.listed[s.id]).slice(5)):'';
-    var html='<span class="sp-pp-pill" title="'+s.name+'：原价 '+baseStr+' → '+finalStr+'（'+disc+'%折）· 利润 '+profStr+' CNY'+dd+'"><span class="sp-pp-site">'+s.name+'</span> '+baseStr;
-    if(disc>0)html+='→<span class="sp-pp-final">'+finalStr+'</span>('+disc+'%)';
-    html+=' <span class="sp-pp-profit '+profCls+'">'+profStr+'</span>';
-    if(dd)html+='<span class="sp-pp-date">'+dd+'</span>';
-    html+='</span>';
-    return html;
+      var profCls=c.profit>=0?'pos':'neg';
+      var html='<span class="sp-pp-cell" title="'+s.name+': 原价 '+s.symbol+fmtNum(base)+' → 折后 '+s.symbol+fmtNum(c.finalLocal)+' ('+disc+'%折) 利润 ¥'+fmtNum(c.profit)+'"><b>'+s.name+'</b> '+s.symbol+fmtNum(base);
+      if(disc>0)html+='→<b class="sp-pp-final">'+s.symbol+fmtNum(c.finalLocal)+'</b>('+disc+'%)';
+      html+=' <span class="sp-pp-profit '+profCls+'">¥'+fmtNum(c.profit)+'</span></span>';
+      return html;
+    }).join('');
+    return '<div class="sp-pp-sku-line"><span class="sp-pp-sku-name">'+escapeHtml(skuName)+'</span>'+siteCells+'</div>';
   }).join('');
-  if(!pills.trim())return '';
-  return '<div class="sp-pp-bar">'+pills+'</div>';
+  var dateLine='';
+  sites.forEach(function(s){
+    if(p.listed&&p.listed[s.id]){
+      var dd=prodSiteDays(p,s.id);
+      var badge=dd!==null&&dd<=30?' 🆕':'';
+      dateLine+='<span class="sp-pp-date-cell"><b>'+s.name+'</b> 📅'+String(p.listed[s.id]).slice(5)+(dd!==null?(' ('+dd+'天)'):'')+badge+'</span>';
+    }
+  });
+  if(dateLine)lines+='<div class="sp-pp-date-line">'+dateLine+'</div>';
+  if(!lines.trim())return '';
+  return '<div class="sp-pp-bar">'+lines+'</div>';
 }
 function renderProductGrid(){
   var el=$('spProdGrid');if(!el)return;
