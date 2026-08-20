@@ -1,6 +1,6 @@
 {
   "name": "外贸工作台",
-  "short_name": "外贸工作台",
+  "short_name": "工作台",
   "description": "外贸人英语进阶 + 跨境电商工作台：单词、句子、SRS复习、邮件模板、Shopee英语、多用户同步",
   "lang": "zh-CN",
   "start_url": "./index.html",
@@ -10,8 +10,9 @@
   "background_color": "#f7f5f0",
   "theme_color": "#0d7377",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icon-192.png", "sizes": "48x48 72x72 96x96 128x128 192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "256x256 384x384 512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "192x192 384x384 512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
+

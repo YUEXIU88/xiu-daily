@@ -1,6 +1,6 @@
 {
-  "v": 64,
-  "version": 64,
+  "v": 65,
+  "version": 65,
   "forceUpdate": true,
-  "note": "v64: Shopee 板块大改造 — 产品列表内联定价预览(各站点售价/折扣/折后价/利润/上架日期) + 订单管理25+字段重构 + 新增采购表/库存表/广告支出表 + 删除售价利润独立板块"
+  "note": "v65: 折叠按钮只点▸才展开(取消整行点击) + 利润气泡化+折扣标签 + sp-pp-price-in stopPropagation输入不丢焦点 + 主行cash cell轻量更新"
 }

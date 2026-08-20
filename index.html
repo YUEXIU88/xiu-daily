@@ -440,7 +440,7 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 .sku-row .input{font-size:12px}
 .sku-no-box{font-size:11px;font-weight:600;color:var(--primary);background:var(--primary-l);border-radius:6px;padding:4px 8px;white-space:nowrap}
 .sku-no-auto{color:var(--text-3);font-weight:400}
-.sp-main-row{cursor:pointer}
+.sp-main-row{cursor:default}
 .sp-main-row.exp td{background:var(--primary-l)}
 .sp-detail-row>td{padding:0!important;background:var(--bg)}
 .sp-detail-wrap{max-height:0;overflow:hidden;transition:max-height .35s ease;padding:0 12px}
@@ -460,8 +460,10 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 .sp-pp-calc{display:inline-flex;align-items:center;gap:2px;margin-left:4px}
 .sp-pp-cell{display:inline-flex;align-items:center;gap:3px;background:var(--bg);border:1px solid var(--border-l);border-radius:5px;padding:1px 5px;white-space:nowrap}
 .sp-pp-cell .sp-pp-final{color:var(--primary);font-weight:600}
-.sp-pp-cell .sp-pp-profit.pos{color:#2ea043}
-.sp-pp-cell .sp-pp-profit.neg{color:#d9534f}
+.sp-pp-cell .sp-pp-profit{display:inline-flex;align-items:center;gap:2px;padding:1px 6px;border-radius:9px;font-weight:600;font-size:10.5px;line-height:1.3}
+.sp-pp-cell .sp-pp-profit.pos{color:#1e7d34;background:#e6f7ec;border:1px solid #b5e0c2}
+.sp-pp-cell .sp-pp-profit.neg{color:#b22a2a;background:#fde8e8;border:1px solid #f4b4b4}
+.sp-pp-cell .sp-pp-discount-tag{display:inline-block;font-size:9.5px;color:#fff;background:var(--primary);border-radius:7px;padding:0 4px;font-weight:600}
 .sp-pp-date-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10px;color:var(--text-3);margin-top:2px;padding-top:2px;border-top:1px dashed var(--border-l)}
 .sp-pp-date-cell{white-space:nowrap}
 /* V64: 订单详情展开网格 */
@@ -1233,7 +1235,7 @@ var SITE_CALC_DEFAULT={
   id:{hide:'',commission:5,rate:0.00045,coupon:0,enabled:false}
 };
 var periodCalDate=new Date();
-var APP_VERSION=64;
+var APP_VERSION=65;
 var DEFAULT_BUCKET='U95Cb8XrEnnDPjLyvCoYBo';
 var syncBucketId='',syncTimer=null,syncing=false,syncDirty=false;
 var studyLog=[],srsData={},mistakes=[],achievements=[],dailyState={};
@@ -1717,6 +1719,24 @@ function prodCostSummary(p){var skus=p.skus||[];if(!skus.length)return {min:p.co
 function prodWeightSummary(p){var skus=p.skus||[];if(!skus.length)return {min:p.weight||0,max:p.weight||0};var arr=skus.map(function(s){return parseFloat(s.weight)||0;});return {min:Math.min.apply(null,arr),max:Math.max.apply(null,arr)};}
 function prodStatusBadge(s){if(s==='on')return '<span class="sp-badge sp-badge-on">🟢 上架中</span>';if(s==='off')return '<span class="sp-badge sp-badge-off">⏸ 已下架</span>';return '<span class="sp-badge sp-badge-draft">📝 草稿</span>';}
 // V64: 产品列表定价预览 — 每个 SKU 一行（规格名 + 各站点原价输入 + 计算结果）
+function renderSkuSiteCalc(p,sk,si,sid){
+  var s=SHOPEE_SITES.find(function(x){return x.id===sid;});if(!s)return '';
+  var pr=(sk.price&&sk.price[s.id])||{};
+  var baseNum=parseFloat(pr.base)||0;
+  var disc=prodDisc(p,s.id);
+  if(!baseNum)return '';
+  var c=calcSkuSite(sk,s.id,disc);
+  var profCls=c.profit>=0?'pos':'neg';
+  var profSign=c.profit>=0?'+':'−';
+  var profTxt='利润 '+profSign+'¥'+fmtNum(Math.abs(c.profit));
+  var html='<span class="sp-pp-calc" title="'+s.name+': 原价 '+s.symbol+fmtNum(baseNum)+' → 折后 '+s.symbol+fmtNum(c.finalLocal)+' ('+disc+'%折) 利润 ¥'+fmtNum(c.profit)+'">';
+  html+='<b class="sp-pp-discount-tag">'+(disc>0?disc+'%':0)+'折</b> ';
+  html+=s.symbol+fmtNum(baseNum);
+  if(disc>0)html+='→<b class="sp-pp-final">'+s.symbol+fmtNum(c.finalLocal)+'</b>';
+  html+=' <span class="sp-pp-profit '+profCls+'" title="毛利 ¥'+fmtNum(c.profit)+'">'+profTxt+'</span>';
+  html+='</span>';
+  return html;
+}
 function renderProductPricePreview(p){
   var sites=calcSitesEnabled();
   if(!sites.length)return '';
@@ -1725,22 +1745,13 @@ function renderProductPricePreview(p){
   var lines=skus.map(function(sk,si){
     var skuLabel=sk.skuNo||sk.name||('SKU'+(si+1));
     var siteCells=sites.map(function(s){
+      var calcHtml=renderSkuSiteCalc(p,sk,si,s.id);
       var pr=(sk.price&&sk.price[s.id])||{};
       var baseVal=pr.base!=null?String(pr.base):'';
-      var baseNum=parseFloat(pr.base)||0;
-      var disc=prodDisc(p,s.id);
-      var calcHtml='';
-      if(baseNum){
-        var c=calcSkuSite(sk,s.id,disc);
-        var profCls=c.profit>=0?'pos':'neg';
-        calcHtml='<span class="sp-pp-calc" title="'+s.name+': 原价 '+s.symbol+fmtNum(baseNum)+' → 折后 '+s.symbol+fmtNum(c.finalLocal)+' ('+disc+'%折) 利润 ¥'+fmtNum(c.profit)+'">'+s.symbol+fmtNum(baseNum);
-        if(disc>0)calcHtml+='→<b class="sp-pp-final">'+s.symbol+fmtNum(c.finalLocal)+'</b>('+disc+'%)';
-        calcHtml+=' <span class="sp-pp-profit '+profCls+'">¥'+fmtNum(c.profit)+'</span></span>';
-      }
-      var inHtml='<span class="sp-pp-cell"><b>'+s.name+'</b> <input class="sp-pp-price-in" type="number" step="0.01" min="0" data-sku-price="'+si+'" data-site="'+s.id+'" data-key="base" value="'+baseVal+'" placeholder="0"> '+s.symbol+'</span>';
+      var inHtml='<span class="sp-pp-cell" onclick="event.stopPropagation()"><b>'+s.name+'</b> <input class="sp-pp-price-in" type="number" inputmode="decimal" step="0.01" min="0" data-sku-price="'+si+'" data-site="'+s.id+'" data-key="base" value="'+baseVal+'" placeholder="0" onclick="event.stopPropagation()" onfocus="event.stopPropagation()"> '+s.symbol+'</span>';
       return inHtml+calcHtml;
     }).join('');
-    return '<div class="sp-pp-sku-line"><span class="sp-pp-sku-name">'+escapeHtml(skuLabel)+'</span>'+siteCells+'</div>';
+    return '<div class="sp-pp-sku-line" onclick="event.stopPropagation()"><span class="sp-pp-sku-name">'+escapeHtml(skuLabel)+'</span>'+siteCells+'</div>';
   }).join('');
   var dateLine='';
   sites.forEach(function(s){
@@ -2215,10 +2226,10 @@ MODULES['sp-products']={title:'产品管理',render:function(){
   $('spCancelProdBtn').addEventListener('click',closeProductForm);
   $('spProdModalClose').addEventListener('click',closeProductForm);
   $('spProdModalMask').addEventListener('click',closeProductForm);
-  $('spProdGrid').addEventListener('click',function(e){var mv=e.target.closest('[data-sku-move]');if(mv){if(mv.disabled)return;var mrc=mv.closest('[data-pid]');if(mrc){var mp=spProducts.find(function(x){return x.id===mrc.dataset.pid;});if(mp&&(mp.skus||[]).length>1){var ma=parseInt(mv.dataset.skuMove),mb=ma+parseInt(mv.dataset.dir);if(ma>=0&&ma<mp.skus.length&&mb>=0&&mb<mp.skus.length){var tm=mp.skus[ma];mp.skus[ma]=mp.skus[mb];mp.skus[mb]=tm;saveData(SK.spProducts,spProducts);var nk={};for(var mk in skuCalcOpen){if(mk.indexOf(mrc.dataset.pid+'_')!==0)nk[mk]=skuCalcOpen[mk];}skuCalcOpen=nk;saveData(SK.skuCalcOpen,skuCalcOpen);renderProductGrid();}}}return;}var tg=e.target.closest('[data-sku-toggle]');if(tg){var rc=tg.closest('[data-pid]');if(rc){var ppid=rc.dataset.pid,ssi=tg.dataset.skuToggle,key=ppid+'_'+ssi;skuCalcOpen[key]=!skuCalcOpen[key];saveData(SK.skuCalcOpen,skuCalcOpen);var sy=window.scrollY||0;renderProductGrid();setTimeout(function(){window.scrollTo(0,sy);},0);}return;}var c=e.target.closest('[data-pid]');if(!c)return;var a=e.target.closest('[data-act]');var pid=c.dataset.pid;if(!a){if(c.classList.contains('sp-main-row')){prodExpanded[pid]=!prodExpanded[pid];saveData(SK.prodExpanded,prodExpanded);renderProductGrid();return;}return;}var act=a.dataset.act;if(act==='toggle'){prodExpanded[pid]=!prodExpanded[pid];saveData(SK.prodExpanded,prodExpanded);renderProductGrid();}else if(act==='edit')showProductForm(pid);else if(act==='copy')copyProduct(pid);else if(act==='del')deleteProduct(pid);else if(act==='expandTitle'){var p=spProducts.find(function(x){return x.id===pid;});if(p)showModal('完整标题',escapeHtml(p.title||p.name));}else if(act==='copyTitle'){var p=spProducts.find(function(x){return x.id===pid;});if(p&&navigator.clipboard){navigator.clipboard.writeText(p.title||p.name).then(function(){showToast('标题已复制');});}else if(p){showToast(p.title||p.name);}}});
+  $('spProdGrid').addEventListener('click',function(e){var mv=e.target.closest('[data-sku-move]');if(mv){if(mv.disabled)return;var mrc=mv.closest('[data-pid]');if(mrc){var mp=spProducts.find(function(x){return x.id===mrc.dataset.pid;});if(mp&&(mp.skus||[]).length>1){var ma=parseInt(mv.dataset.skuMove),mb=ma+parseInt(mv.dataset.dir);if(ma>=0&&ma<mp.skus.length&&mb>=0&&mb<mp.skus.length){var tm=mp.skus[ma];mp.skus[ma]=mp.skus[mb];mp.skus[mb]=tm;saveData(SK.spProducts,spProducts);var nk={};for(var mk in skuCalcOpen){if(mk.indexOf(mrc.dataset.pid+'_')!==0)nk[mk]=skuCalcOpen[mk];}skuCalcOpen=nk;saveData(SK.skuCalcOpen,skuCalcOpen);renderProductGrid();}}}return;}var tg=e.target.closest('[data-sku-toggle]');if(tg){var rc=tg.closest('[data-pid]');if(rc){var ppid=rc.dataset.pid,ssi=tg.dataset.skuToggle,key=ppid+'_'+ssi;skuCalcOpen[key]=!skuCalcOpen[key];saveData(SK.skuCalcOpen,skuCalcOpen);var sy=window.scrollY||0;renderProductGrid();setTimeout(function(){window.scrollTo(0,sy);},0);}return;}var c=e.target.closest('[data-pid]');if(!c)return;var pid=c.dataset.pid;var a=e.target.closest('[data-act]');if(!a)return;var act=a.dataset.act;if(act==='toggle'){prodExpanded[pid]=!prodExpanded[pid];saveData(SK.prodExpanded,prodExpanded);renderProductGrid();}else if(act==='edit')showProductForm(pid);else if(act==='copy')copyProduct(pid);else if(act==='del')deleteProduct(pid);else if(act==='expandTitle'){var p=spProducts.find(function(x){return x.id===pid;});if(p)showModal('完整标题',escapeHtml(p.title||p.name));}else if(act==='copyTitle'){var p=spProducts.find(function(x){return x.id===pid;});if(p&&navigator.clipboard){navigator.clipboard.writeText(p.title||p.name).then(function(){showToast('标题已复制');});}else if(p){showToast(p.title||p.name);}}});
   // V57: removed change→renderProductGrid() that caused janky full re-render on blur.
   // The input event handler below already saves data + syncs all discount inputs in real-time.
-  $('spProdGrid').addEventListener('input',function(e){var sd=e.target.closest('[data-sku-disc]');if(sd){var sc=sd.closest('[data-pid]');if(sc){var spid=sc.dataset.pid;var spp=spProducts.find(function(x){return x.id===spid;});if(spp){if(!spp.disc)spp.disc={};spp.disc[sd.dataset.site]=sd.value;saveData(SK.spProducts,spProducts);var prIn=document.querySelector('tr[data-pid="'+spid+'"] [data-prod-disc="'+sd.dataset.site+'"]');if(prIn&&document.activeElement!==prIn)prIn.value=sd.value;(spp.skus||[]).forEach(function(sk2,si2){var o=document.getElementById('skuDiscVal_'+spid+'_'+si2+'_'+sd.dataset.site);if(o&&o!==sd&&document.activeElement!==o)o.value=prodDisc(spp,sd.dataset.site);refreshSkuCalcCard(spid,si2);});}}return;}var pd=e.target.closest('[data-prod-disc]');if(pd){var pc=pd.closest('[data-pid]');if(!pc)return;var ppid=pc.dataset.pid;var pp=spProducts.find(function(x){return x.id===ppid;});if(!pp)return;if(!pp.disc)pp.disc={};pp.disc[pd.dataset.prodDisc]=pd.value;saveData(SK.spProducts,spProducts);(pp.skus||[]).forEach(function(sk,si){refreshSkuCalcCard(ppid,si);});return;}var inp=e.target.closest('[data-sku-price]');if(!inp)return;var c=inp.closest('[data-pid]');if(!c)return;var pid=c.dataset.pid;var si=parseInt(inp.dataset.skuPrice);if(isNaN(si))return;var p=spProducts.find(function(x){return x.id===pid;});if(!p||!(p.skus||[])[si])return;var sk=p.skus[si];if(!sk.price)sk.price={};var sid=inp.dataset.site;if(!sk.price[sid])sk.price[sid]={};sk.price[sid][inp.dataset.key]=inp.value;saveData(SK.spProducts,spProducts);refreshSkuCalcCard(pid,si);});
+  $('spProdGrid').addEventListener('input',function(e){var sd=e.target.closest('[data-sku-disc]');if(sd){var sc=sd.closest('[data-pid]');if(sc){var spid=sc.dataset.pid;var spp=spProducts.find(function(x){return x.id===spid;});if(spp){if(!spp.disc)spp.disc={};spp.disc[sd.dataset.site]=sd.value;saveData(SK.spProducts,spProducts);var prIn=document.querySelector('tr[data-pid="'+spid+'"] [data-prod-disc="'+sd.dataset.site+'"]');if(prIn&&document.activeElement!==prIn)prIn.value=sd.value;(spp.skus||[]).forEach(function(sk2,si2){var o=document.getElementById('skuDiscVal_'+spid+'_'+si2+'_'+sd.dataset.site);if(o&&o!==sd&&document.activeElement!==o)o.value=prodDisc(spp,sd.dataset.site);refreshSkuCalcCard(spid,si2);});}}return;}var pd=e.target.closest('[data-prod-disc]');if(pd){var pc=pd.closest('[data-pid]');if(!pc)return;var ppid=pc.dataset.pid;var pp=spProducts.find(function(x){return x.id===ppid;});if(!pp)return;if(!pp.disc)pp.disc={};pp.disc[pd.dataset.prodDisc]=pd.value;saveData(SK.spProducts,spProducts);(pp.skus||[]).forEach(function(sk,si){refreshSkuCalcCard(ppid,si);});return;}var inp=e.target.closest('[data-sku-price]');if(!inp)return;var c=inp.closest('[data-pid]');if(!c)return;var pid=c.dataset.pid;var si=parseInt(inp.dataset.skuPrice);if(isNaN(si))return;var p=spProducts.find(function(x){return x.id===pid;});if(!p||!(p.skus||[])[si])return;var sk=p.skus[si];if(!sk.price)sk.price={};var sid=inp.dataset.site;if(!sk.price[sid])sk.price[sid]={};sk.price[sid][inp.dataset.key]=inp.value;saveData(SK.spProducts,spProducts);refreshSkuCalcCard(pid,si);var ppCalc=inp.parentElement&&inp.parentElement.querySelector('.sp-pp-calc');if(ppCalc){ppCalc.outerHTML=renderSkuSiteCalc(p,sk,si,sid);}var othInp=document.querySelector('input[data-sku-price="'+si+'"][data-site="'+sid+'"][data-key="'+inp.dataset.key+'"]');if(othInp&&othInp!==inp&&document.activeElement!==othInp)othInp.value=inp.value;});
 }};
 
 // ---------- Shopee: Pricing ----------
