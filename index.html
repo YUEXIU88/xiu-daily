@@ -93,7 +93,8 @@
 body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fixed;color:var(--text);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
 
 /* ===== Loading Screen ===== */
-.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s}
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s;animation:lsForceFade 0.4s ease 4s forwards}
+@keyframes lsForceFade{from{opacity:1}to{opacity:0;visibility:hidden}}
 .loading-screen.hidden{opacity:0;pointer-events:none}
 .loading-logo{font-size:48px;margin-bottom:12px;animation:bounce 1s ease infinite}
 .loading-title{font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -1022,6 +1023,30 @@ h1,h2,h3{letter-spacing:-.01em}
   .toolbar .input{max-width:100%!important;min-width:0;flex:1 1 140px}
 }
 </style>
+<script>
+// V61 终极兜底：无论 init() 怎么挂，3 秒后强制隐藏加载屏 + 5 秒兜底再执行一次
+// 放在 <head> 极早期，不依赖任何全局变量/函数
+(function(){
+  function forceHide(){
+    try{
+      var ls=document.getElementById('loadingScreen');
+      if(ls){ls.style.display='none';}
+    }catch(e){}
+  }
+  setTimeout(forceHide,3000);
+  setTimeout(forceHide,5000);
+  // 全局捕获未处理的 promise rejection
+  window.addEventListener('unhandledrejection',function(ev){
+    try{
+      forceHide();
+      var d=document.createElement('div');
+      d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#fee;color:#c00;font:13px monospace;padding:16px;white-space:pre-wrap;word-break:break-all';
+      d.textContent='Unhandled Promise Rejection: '+(ev.reason&&ev.reason.message?ev.reason.message:String(ev.reason));
+      document.body.appendChild(d);
+    }catch(e){}
+  });
+})();
+</script>
 </head>
 <body>
 <div class="loading-screen" id="loadingScreen">
@@ -1171,7 +1196,7 @@ var SITE_CALC_DEFAULT={
   id:{hide:'',commission:5,rate:0.00045,coupon:0,enabled:false}
 };
 var periodCalDate=new Date();
-var APP_VERSION=60;
+var APP_VERSION=61;
 var DEFAULT_BUCKET='U95Cb8XrEnnDPjLyvCoYBo';
 var syncBucketId='',syncTimer=null,syncing=false,syncDirty=false;
 var studyLog=[],srsData={},mistakes=[],achievements=[],dailyState={};
@@ -3159,9 +3184,22 @@ async function diagSync(){
 }
 
 // ==================== INIT ====================
+// Global error handler — catch any JS error and show it
+window.onerror=function(msg,url,line,col,err){
+  try{
+    var ls=document.getElementById('loadingScreen');
+    if(ls){ls.style.display='none';}
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#fee;color:#c00;font:13px monospace;padding:16px;white-space:pre-wrap;word-break:break-all';
+    d.textContent='JS Error: '+msg+'\nLine: '+line+':'+col+'\n'+(err&&err.stack?err.stack:'');
+    document.body.appendChild(d);
+  }catch(e){}
+  return false;
+};
 async function init(){
   // V44: 兜底——无论网络多慢，最多转 7 秒强制隐藏加载屏（旧版此兜底排在 await 之后，网络挂起时根本执行不到）
   setTimeout(function(){hideLoading(true);},7000);
+try{
   // 本地版本升级判断（无需网络）
   var storedVer=parseInt(localStorage.getItem('xiu_app_ver')||'0',10);
   if(storedVer&&storedVer<APP_VERSION){
@@ -3219,6 +3257,14 @@ async function init(){
   if(uBtn)uBtn.addEventListener('click',forceUpdateBtnClick);
   if(getAuthState()!=='user'&&getAuthState()!=='guest'){showAuthGate();setAuthMode('login');}
   setTimeout(maybeAutoUpdateRates,2500); // V31：启动后静默更新当天汇率
+}catch(e){
+  console.error('init() error:',e);
+  hideLoading(true);
+  var ed=document.createElement('div');
+  ed.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#fee;color:#c00;font:13px monospace;padding:16px;white-space:pre-wrap;word-break:break-all';
+  ed.textContent='Init Error: '+(e&&e.message?e.message:String(e))+'\nStack: '+(e&&e.stack?e.stack:'');
+  document.body.appendChild(ed);
+}
 }
 init();
 </script>
