@@ -1,6 +1,6 @@
 {
-  "v": 67,
-  "version": 67,
+  "v": 68,
+  "version": 68,
   "forceUpdate": true,
-  "note": "v67: 修复计算气泡查找bug(parentElement.querySelector→nextElementSibling) + 防抖保存150ms + saveData去掉img避免配额不足 + 折后价本地货币+人民币+利润气泡 + pagehide强制保存"
+  "note": "v68: 重新生成统一粉色版 PWA 图标（icon-192/icon-512/icon-maskable-512 全部粉红渐变 + 玫瑰金箭头 + 白色地球）+ manifest theme_color + HTML theme-color 同步改为 #ff6698"
 }
