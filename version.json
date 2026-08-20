@@ -1,6 +1,6 @@
 {
-  "v": 62,
-  "version": 62,
+  "v": 63,
+  "version": 63,
   "forceUpdate": true,
-  "note": "v62: 修复 TTS 朗读（Web Speech API 优先）+ 可爱卡通图标替换 + 面试模块扩充（30题含中英答案+35条口语表达）"
+  "note": "v63: 电脑端 PWA 安装引导（地址栏 📥 图标 + 浏览器菜单 ⋮ → 安装 XIU DAILY 全屏 App 图标）"
 }
