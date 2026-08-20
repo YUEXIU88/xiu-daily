@@ -448,7 +448,7 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 /* V64: 产品列表定价预览 — per-SKU per-site */
 .sp-pp-bar{margin-top:5px;display:flex;flex-direction:column;gap:3px}
 .sp-pp-sku-line{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:10.5px;line-height:1.5}
-.sp-pp-sku-name{font-weight:600;color:var(--text);font-size:11.5px;line-height:1.3;display:block}
+.sp-pp-sku-name{font-weight:600;color:var(--text);font-size:11.5px;line-height:1.4;display:inline-block;max-width:280px;overflow-wrap:anywhere;padding-right:6px;border-right:1px dashed var(--border-l);margin-right:2px}
 .sp-pp-sku-disc{font-size:9.5px;color:var(--text-3);margin-top:1px;line-height:1.3}
 .sp-pp-sku-disc b{color:var(--text-2);font-weight:500;margin-right:2px}
 .sp-pp-sku-disc .sp-pp-disc-val{color:var(--primary)}
@@ -1267,6 +1267,8 @@ function loadAllData(){
   spProducts=loadData(SK.spProducts,[]);spPricing=loadData(SK.spPricing,{});
   spOrders=loadData(SK.spOrders,[]);spAds=loadData(SK.spAds,[]);spPurchase=loadData(SK.spPurchase,[]);spStockManual=loadData(SK.spStockManual,{});
   siteCalc=loadData(SK.siteCalc,null);if(!siteCalc)siteCalc=JSON.parse(JSON.stringify(SITE_CALC_DEFAULT));ensureSiteCalc();
+  // V64 迁移：sp-pricing 模块的"原价"是产品价格级别，列表 SKU 价格预览需要 sk.price[sid].base；旧版本如果只填了产品级，每 SKU 同步一份作为初值
+  migrateSpPricingToSkuPrice();
   currentModule=localStorage.getItem(SK.lastModule)||'en-daily';
   prodExpanded=loadData(SK.prodExpanded,{});skuCalcOpen=loadData(SK.skuCalcOpen,{});
   ftCustomers=loadData(SK.ftCustomers,[]);ftDocuments=loadData(SK.ftDocs,[]);
@@ -1716,7 +1718,7 @@ function renderProductPricePreview(p){
   var skus=p.skus||[];
   if(!skus.length)return '';
   var lines=skus.map(function(sk,si){
-    var skuName=sk.name||('SKU'+(si+1));
+    var skuLabel=sk.skuNo||sk.name||('SKU'+(si+1));
     var siteCells=sites.map(function(s){
       var pr=(sk.price&&sk.price[s.id])||{};
       var base=parseFloat(pr.base)||0;
@@ -1729,7 +1731,7 @@ function renderProductPricePreview(p){
       html+=' <span class="sp-pp-profit '+profCls+'">¥'+fmtNum(c.profit)+'</span></span>';
       return html;
     }).join('');
-    return '<div class="sp-pp-sku-line"><span class="sp-pp-sku-name">'+escapeHtml(skuName)+'</span>'+siteCells+'</div>';
+    return '<div class="sp-pp-sku-line"><span class="sp-pp-sku-name">'+escapeHtml(skuLabel)+'</span>'+siteCells+'</div>';
   }).join('');
   var dateLine='';
   sites.forEach(function(s){
@@ -1837,7 +1839,29 @@ function renderSkuDetailTable(p){
   return '<div class="sp-sku-cards">'+cards+'</div>';
 }
 // ============ SKU 定价计算引擎（V26+）============
-function ensureSiteCalc(){SHOPEE_SITES.forEach(function(s){if(!siteCalc[s.id])siteCalc[s.id]={hide:'',commission:s.commission,rate:s.rate,coupon:0};var c=siteCalc[s.id];if(c.enabled===undefined)c.enabled=!!c.hide;});}
+function ensureSiteCalc(){SHOPEE_SITES.forEach(function(s){if(!siteCalc[s.id])siteCalc[s.id]={hide:'',commission:s.commission,rate:s.rate,coupon:0};var c=siteCalc[s.id];if(c.enabled===undefined)c.enabled=!!c.hide;});
+  // V64：附加迁移函数（仅在此处定义一次）
+  if(typeof window.migrateSpPricingToSkuPrice!=='function'){
+    window.migrateSpPricingToSkuPrice=function(){
+      var sites=SHOPEE_SITES;var migrated=0;
+      spProducts.forEach(function(p){
+        if(!spPricing[p.id])return;
+        sites.forEach(function(s){
+          var prv=spPricing[p.id][s.id];if(!prv)return;
+          var pbase=parseFloat(prv.price);if(!(pbase>0))return;
+          (p.skus||[]).forEach(function(sk){
+            if(!sk.price)sk.price={};
+            if(!sk.price[s.id])sk.price[s.id]={};
+            if(sk.price[s.id].base!=null&&parseFloat(sk.price[s.id].base)>0)return;
+            sk.price[s.id].base=pbase;migrated++;
+          });
+        });
+      });
+      if(migrated>0){try{saveData(SK.spProducts,spProducts);}catch(e){}try{localStorage.setItem('xiu_sp_pricing_migrated_v64','1');}catch(e){}}
+      return migrated;
+    };
+  }
+}
 function calcSitesEnabled(){ensureSiteCalc();return SHOPEE_SITES.filter(function(s){return siteCalc[s.id]&&siteCalc[s.id].enabled;});}
 // ============ 汇率参考（V33 起：手动设置为主，仅拉取当天值作参考）============
 // open.er-api.com 免费无需 key，返回「1 人民币 = X 外币」，因此本地汇率 = 1/X
