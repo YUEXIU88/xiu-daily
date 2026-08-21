@@ -1,6 +1,6 @@
 {
-  "v": 70,
-  "version": 70,
+  "v": 71,
+  "version": 71,
   "forceUpdate": true,
-  "note": "v70: 笔记本升级富文本编辑器(contenteditable+工具栏) - 粗/斜/下划/删除线+H2/H3/正文+有序无序列表+引用+左中右对齐+字号3档+文字颜色+撤销重做+清除格式; 旧纯文本笔记自动兼容; 列表预览strip HTML"
+  "note": "v71: 修复笔记刷新丢失(pullSyncData改合并+pagehide保存+doSync限60KB) + 工具栏新增分割线/emoji面板/待办清单"
 }
