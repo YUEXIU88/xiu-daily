@@ -1,6 +1,6 @@
 {
-  "v": 82,
-  "version": 82,
+  "v": 83,
+  "version": 83,
   "forceUpdate": true,
-  "note": "V82: SKU号严格三段式「产品中文名-规格-数量个」+ 中文检测保险（修复英文title fallback bug + 变体剥前缀误吞字尾 fix）"
+  "note": "V83: 产品管理工具栏新增「💾 保存」按钮 + 未保存闪烁提醒 + beforeunload 刷新兜底"
 }
