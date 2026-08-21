@@ -1,6 +1,6 @@
 {
-  "v": 74,
-  "version": 74,
+  "v": 75,
+  "version": 75,
   "forceUpdate": true,
-  "note": "v74: Shopee SKU 行增加成本列（在 SKU 号后、所有站点前；橙色高亮）+ input handler data-sku-cost 分支（150ms 防抖 + 刷新所有站点利润气泡）+ 同步展开卡片"
+  "note": "v75: Shopee 产品列表布局重构 — 价格信息(折扣+SKU价格行)从标题列移到图片列下方，所有 SKU 价格在同一列左对齐与图片对齐；col-img 90px→440px，sp-pp-sku-name 最小宽度 135px 不换行"
 }
