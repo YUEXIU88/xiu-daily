@@ -1,1 +1,1 @@
-{"v":76,"version":76,"forceUpdate":true,"note":"v76: SKU 站点块强制单行 (site-block inline-flex)"}
+{"v":77,"version":77,"forceUpdate":true,"note":"v77: SKU 整行强制不换行 (nowrap + overflow-x:auto)"}
