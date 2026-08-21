@@ -1,6 +1,6 @@
 {
-  "v": 73,
-  "version": 73,
+  "v": 74,
+  "version": 74,
   "forceUpdate": true,
-  "note": "v73: 修复 Shopee 产品图片刷新丢失 - 图片单独存到 xiu_sp_imgs_v1 独立 localStorage key，saveData 剥离 img 时同时存，loadAllData 加载后恢复，pagehide 也保存图片"
+  "note": "v74: Shopee SKU 行增加成本列（在 SKU 号后、所有站点前；橙色高亮）+ input handler data-sku-cost 分支（150ms 防抖 + 刷新所有站点利润气泡）+ 同步展开卡片"
 }
