@@ -1,6 +1,6 @@
 {
-  "v": 72,
-  "version": 72,
+  "v": 73,
+  "version": 73,
   "forceUpdate": true,
-  "note": "v72: 笔记本工具栏新增 🎤 语音转文字(webkitSpeechRecognition zh-CN)+ 🖼️ 图片插入(FileReader压缩800px JPEG+insertImage)；图片样式圆角自适应；psNotes 超 40KB 跳过云同步保留本地"
+  "note": "v73: 修复 Shopee 产品图片刷新丢失 - 图片单独存到 xiu_sp_imgs_v1 独立 localStorage key，saveData 剥离 img 时同时存，loadAllData 加载后恢复，pagehide 也保存图片"
 }
