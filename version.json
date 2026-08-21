@@ -1,6 +1,6 @@
 {
-  "v": 69,
-  "version": 69,
+  "v": 70,
+  "version": 70,
   "forceUpdate": true,
-  "note": "v69: 桌面临时 X U DAILY.url 入口（粉色 PNG 图标）+ 个人中心新增重置 PWA 按钮一键清理旧 SW/缓存 + favicon.ico 多尺寸生成"
+  "note": "v70: 笔记本升级富文本编辑器(contenteditable+工具栏) - 粗/斜/下划/删除线+H2/H3/正文+有序无序列表+引用+左中右对齐+字号3档+文字颜色+撤销重做+清除格式; 旧纯文本笔记自动兼容; 列表预览strip HTML"
 }
