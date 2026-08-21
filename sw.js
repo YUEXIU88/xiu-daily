@@ -1,6 +1,6 @@
 /* XIU DAILY Service Worker - offline app shell */
-var CACHE = 'xiu-daily-v75';
-var SW_VERSION = 75;
+var CACHE = 'xiu-daily-v76';
+var SW_VERSION = 76;
 var ASSETS = [
   './',
   './index.html',

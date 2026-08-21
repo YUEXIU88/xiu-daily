@@ -413,7 +413,7 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 .sp-tb-title-copy:hover{background:var(--primary);color:#fff}
 .sp-tb-sub{font-size:11px;color:var(--text-3);margin-top:1px}
 /* V34：产品行 SKU 列内的产品级折扣输入（全 SKU 统一） */
-.sp-prod-tbl .col-img{vertical-align:top;width:440px;padding-top:6px;padding-left:10px;padding-right:6px}
+.sp-prod-tbl .col-img{vertical-align:top;min-width:280px;max-width:480px;padding-top:6px;padding-left:10px;padding-right:6px}
 .sp-prod-tbl .col-title{vertical-align:top;padding-top:4px;padding-left:4px}
 .sp-prod-tbl .col-sku{min-width:64px}
 .sp-pp-bar{margin-top:6px;margin-left:0;padding-left:0;display:flex;flex-direction:column;gap:4px}
@@ -454,7 +454,7 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 .sp-detail-row.open .sp-detail-wrap{max-height:1200px;padding:12px}
 /* V64: 产品列表定价预览 — per-SKU per-site */
 .sp-pp-bar{margin-top:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
-.sp-pp-sku-line{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:10.5px;line-height:1.6;width:100%}
+.sp-pp-sku-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;line-height:1.6;width:100%}
 .sp-pp-sku-name{font-weight:600;color:var(--text);font-size:11.5px;line-height:1.4;display:inline-block;max-width:none;overflow-wrap:normal;padding-right:8px;border-right:1px dashed var(--border-l);margin-right:6px;white-space:nowrap;flex-shrink:0;min-width:135px}
 .sp-pp-sku-disc{font-size:9.5px;color:var(--text-3);margin-top:1px;line-height:1.3}
 .sp-pp-sku-disc b{color:var(--text-2);font-weight:500;margin-right:2px}
@@ -482,6 +482,10 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 .sp-pp-cell .sp-pp-profit.pos{color:#1e7d34;background:#e6f7ec;border:1px solid #b5e0c2}
 .sp-pp-cell .sp-pp-profit.neg{color:#b22a2a;background:#fde8e8;border:1px solid #f4b4b4}
 .sp-pp-cell .sp-pp-discount-tag{display:inline-block;font-size:9.5px;color:#fff;background:var(--primary);border-radius:7px;padding:0 4px;font-weight:600}
+.sp-pp-site-block{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;background:var(--bg);border:1px solid var(--border-l);border-radius:8px;padding:2px 5px;white-space:nowrap;flex-wrap:nowrap}
+.sp-pp-site-block>.sp-pp-cell{background:transparent;border:none;padding:1px 3px}
+.sp-pp-site-block>.sp-pp-calc{margin-left:2px;padding:2px 7px;background:var(--card);border:1px solid var(--border);border-radius:7px}
+.sp-pp-site-block.sp-pp-cost-block{background:#fff8e1;border-color:#ffb74d}
 .sp-pp-date-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10px;color:var(--text-3);margin-top:2px;padding-top:2px;border-top:1px dashed var(--border-l)}
 .sp-pp-date-cell{white-space:nowrap}
 /* V64: 订单详情展开网格 */
@@ -1294,7 +1298,7 @@ var SITE_CALC_DEFAULT={
   id:{hide:'',commission:5,rate:0.00045,coupon:0,enabled:false}
 };
 var periodCalDate=new Date();
-var APP_VERSION=75;
+var APP_VERSION=76;
 var DEFAULT_BUCKET='U95Cb8XrEnnDPjLyvCoYBo';
 var syncBucketId='',syncTimer=null,syncing=false,syncDirty=false;
 var studyLog=[],srsData={},mistakes=[],achievements=[],dailyState={};
@@ -1809,11 +1813,11 @@ function renderProductPricePreview(p){
       var calcHtml=renderSkuSiteCalc(p,sk,si,s.id);
       var pr=(sk.price&&sk.price[s.id])||{};
       var baseVal=pr.base!=null?String(pr.base):'';
-      var inHtml='<span class="sp-pp-cell" onclick="event.stopPropagation()"><b>'+s.name+'</b> <input class="sp-pp-price-in" type="number" inputmode="decimal" step="0.01" min="0" data-sku-price="'+si+'" data-site="'+s.id+'" data-key="base" value="'+baseVal+'" placeholder="0" onclick="event.stopPropagation()" onfocus="event.stopPropagation()"> '+s.symbol+'</span>';
-      return inHtml+calcHtml;
+      var inHtml='<span class="sp-pp-cell" onclick="event.stopPropagation()"><b>'+s.name.charAt(0)+'</b><input class="sp-pp-price-in" type="number" inputmode="decimal" step="0.01" min="0" data-sku-price="'+si+'" data-site="'+s.id+'" data-key="base" value="'+baseVal+'" placeholder="0" onclick="event.stopPropagation()" onfocus="event.stopPropagation()"> '+s.symbol+'</span>';
+      return '<span class="sp-pp-site-block" onclick="event.stopPropagation()">'+inHtml+calcHtml+'</span>';
     }).join('');
     var costVal=sk.cost!=null?String(sk.cost):'';
-    var costHtml='<span class="sp-pp-cell sp-pp-cost-cell" onclick="event.stopPropagation()"><b>成本</b> <input class="sp-pp-price-in" type="number" inputmode="decimal" step="0.01" min="0" data-sku-cost="'+si+'" value="'+costVal+'" placeholder="0" onclick="event.stopPropagation()" onfocus="event.stopPropagation()"> <span class="sp-pp-sku-cost-num">¥</span></span>';
+    var costHtml='<span class="sp-pp-site-block sp-pp-cost-block" onclick="event.stopPropagation()"><span class="sp-pp-cell sp-pp-cost-cell"><b>成本</b><input class="sp-pp-price-in" type="number" inputmode="decimal" step="0.01" min="0" data-sku-cost="'+si+'" value="'+costVal+'" placeholder="0" onclick="event.stopPropagation()" onfocus="event.stopPropagation()">¥</span></span>';
     return '<div class="sp-pp-sku-line" onclick="event.stopPropagation()"><span class="sp-pp-sku-name">'+escapeHtml(skuLabel)+'</span>'+costHtml+siteCells+'</div>';
   }).join('');
   var dateLine='';
