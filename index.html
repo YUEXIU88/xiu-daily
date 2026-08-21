@@ -1352,7 +1352,7 @@ var SITE_CALC_DEFAULT={
   id:{hide:'',commission:5,rate:0.00045,coupon:0,enabled:false}
 };
 var periodCalDate=new Date();
-var APP_VERSION=84;
+var APP_VERSION=85;
 var DEFAULT_BUCKET='U95Cb8XrEnnDPjLyvCoYBo';
 var syncBucketId='',syncTimer=null,syncing=false,syncDirty=false;
 var studyLog=[],srsData={},mistakes=[],achievements=[],dailyState={};
@@ -1901,7 +1901,7 @@ function renderSkuSiteCalc(p,sk,si,sid){
     return '<span class="sp-pp-calc empty"><span class="sp-pp-cny">输入原价计算</span></span>';
   }
   var fees=c.hideCny+c.commCny+c.cost+c.other+c.ad;
-  var feeTip='费用明细（已全部从利润中扣除）：藏价 ¥'+fmtNum(c.hideCny)+' + 佣金('+fmtNum(c.commission)+'%) ¥'+fmtNum(c.commCny)+' + 成本 ¥'+fmtNum(c.cost)+' + 优惠券 ¥'+fmtNum(c.coupon*c.rate)+' + 其它 ¥'+fmtNum(c.other)+' + 广告 ¥'+fmtNum(c.ad)+' = 合计 ¥'+fmtNum(fees);
+  var feeTip='费用明细（已全部从利润中扣除）：藏价 ¥'+fmtNum(c.hideCny)+' + 佣金('+c.commLabel+') ¥'+fmtNum(c.commCny)+' + 成本 ¥'+fmtNum(c.cost)+' + 优惠券 ¥'+fmtNum(c.coupon*c.rate)+' + 其它 ¥'+fmtNum(c.other)+' + 广告 ¥'+fmtNum(c.ad)+' = 合计 ¥'+fmtNum(fees);
   var html='<span class="sp-pp-calc" title="'+s.name+': 原价 '+s.symbol+fmtNum(baseNum)+' → 折后 '+s.symbol+fmtNum(c.finalLocal)+' ('+disc+'%折) ≈¥'+fmtNum(c.finalCny)+'&#10;'+feeTip+'&#10;利润 = 实付 ¥'+fmtNum(c.finalCny)+' - 费用 ¥'+fmtNum(fees)+' = ¥'+fmtNum(c.profit)+'">';
   html+='<span class="sp-pp-final">'+s.symbol+fmtNum(c.finalLocal)+'</span>';
   html+='<span class="sp-pp-cny">≈¥'+fmtNum(c.finalCny)+'</span>';
@@ -2092,6 +2092,17 @@ function evalHidePrice(formula,w){
     return isFinite(v)?v:0;
   }catch(e){return 0;}
 }
+// V85: 佣金公式——d=折后价；纯数字=按百分比计（折后价×n%）；公式直接返回佣金金额（本币）
+function evalCommissionFee(formula,d){
+  if(formula==null||String(formula).trim()==='')return 0;
+  var s=String(formula).trim();
+  if(/^-?[\d.]+$/.test(s)){var n=parseFloat(s);return d*n/100;}
+  try{
+    var f=s.replace(/MAX\(/g,'Math.max(').replace(/ROUND\(/g,'Math.round(').replace(/\bd\b/g,'('+d+')').replace(/×/g,'*').replace(/÷/g,'/');
+    var v=new Function('return ('+f+');')();
+    return isFinite(v)?v:0;
+  }catch(e){return 0;}
+}
 // 优惠券满减规则解析：支持「满200减20；满400减60」/「200-20,400-60」/纯数字（无条件减）/留空
 function parseCouponRules(v){
   var rules=[];
@@ -2130,7 +2141,9 @@ function calcSkuSite(sku,sid,pdisc){
   var w=parseFloat(sku.weight)||0;
   var hide=evalHidePrice(cfg.hide,w);
   var rate=parseFloat(cfg.rate)||parseFloat(s.rate)||1;
-  var commission=parseFloat(cfg.commission)!=null&&cfg.commission!==''?parseFloat(cfg.commission):parseFloat(s.commission)||0;
+  var commRaw=(cfg.commission!=null&&String(cfg.commission).trim()!=='')?String(cfg.commission).trim():String(s.commission!=null?s.commission:'');
+  var commIsPct=/^-?[\d.]+$/.test(commRaw);
+  var commission=commIsPct?parseFloat(commRaw):0;
   var pr=(sku.price&&sku.price[sid])||{};
   var base=parseFloat(pr.base)||0,other=parseFloat(pr.other)||0,ad=parseFloat(pr.ad)||0;
   var disc=(pdisc!=null&&pdisc!=='')?(parseFloat(pdisc)||0):(parseFloat(pr.disc)||0);
@@ -2145,13 +2158,13 @@ function calcSkuSite(sku,sid,pdisc){
   var finalCny=finalLocal*rate;
   var hideCny=hide*rate;
   // 佣金按「折后价」计算（买家实际成交口径）
-  var commLocal=discPrice*commission/100;
+  var commLocal=commIsPct?(discPrice*commission/100):evalCommissionFee(commRaw,discPrice);
   var commCny=commLocal*rate;
   var totalCost=cost+hideCny+commCny+other+ad;
   var profit=finalCny-totalCost;
   var margin=finalCny>0?profit/finalCny*100:0;
   var roas=ad>0?finalCny/ad:(finalCny>0?999:0);
-  return {hide:hide,hideCny:hideCny,rate:rate,commission:commission,coupon:coupon,couponRules:couponRules,appliedRule:appliedRule,base:base,disc:disc,other:other,ad:ad,cost:cost,discPrice:discPrice,finalLocal:finalLocal,finalCny:finalCny,commLocal:commLocal,commCny:commCny,totalCost:totalCost,profit:profit,margin:margin,roas:roas};
+  return {hide:hide,hideCny:hideCny,rate:rate,commission:commission,commRaw:commRaw,commLabel:(commIsPct?(fmtNum(commission)+'%'):(commRaw.length>14?commRaw.slice(0,14)+'…':commRaw)),coupon:coupon,couponRules:couponRules,appliedRule:appliedRule,base:base,disc:disc,other:other,ad:ad,cost:cost,discPrice:discPrice,finalLocal:finalLocal,finalCny:finalCny,commLocal:commLocal,commCny:commCny,totalCost:totalCost,profit:profit,margin:margin,roas:roas};
 }
 function skuPriceInput(si,sid,key,val,ph){
   return '<input class="sp-sku-calc-in" type="number" step="0.01" data-sku-price="'+si+'" data-site="'+sid+'" data-key="'+key+'" value="'+(val||'')+'" placeholder="'+ph+'">';
@@ -2175,7 +2188,7 @@ function renderSkuCalcResults(p,sk,si,sid){
     '<div class="sp-cg-flow-bar">'+
       g('藏价',s.symbol+fmtNum(r.hide))+
       g('藏价¥','¥'+fmtNum(r.hideCny))+
-      g('佣金('+r.commission+'%)',s.symbol+fmtNum(r.commLocal)+'<i>¥'+fmtNum(r.commCny)+'</i>')+
+      g('佣金('+r.commLabel+')',s.symbol+fmtNum(r.commLocal)+'<i>¥'+fmtNum(r.commCny)+'</i>')+
       g('成本',s.symbol+fmtNum(r.cost/r.rate)+'<i>¥'+fmtNum(r.cost)+'</i>')+
       g('折后',s.symbol+fmtNum(r.discPrice)+'<i>¥'+fmtNum(r.discPrice*r.rate)+'</i>')+
       g('优惠券','<span class="'+(r.coupon>0?'neg':'')+'">'+cpnTxt+'</span>')+
@@ -2249,12 +2262,12 @@ function openCalcCfgModal(){
     var refTxt=(ref&&ref.rates&&ref.rates[s.id])?'📅 参考（'+ref.date+'）：1 '+s.currency+' ≈ '+fmtNum(ref.rates[s.id])+' CNY':'📅 暂无参考（点上方按钮拉取当天）';
     return '<div class="sp-cfg-site"><div class="sp-cfg-site-title"><label class="sp-cfg-en-label"><input type="checkbox" class="sp-cfg-en" id="cfg_en_'+s.id+'" '+(c.enabled?'checked':'')+'> '+s.name+'（'+s.currency+'）</label></div><div class="form-row">'+
       '<div class="form-group" style="flex:2"><label class="form-label">藏价公式（w=重量克，支持 ROUND / MAX / × ÷）</label><input class="input" id="cfg_hide_'+s.id+'" value="'+escapeAttr(c.hide||'')+'" placeholder="例：ROUND(23+MAX(w-50,0)/10*4.5,0)"></div>'+
-      '<div class="form-group" style="flex:1"><label class="form-label">佣金率 %</label><input class="input" type="number" step="0.1" id="cfg_comm_'+s.id+'" value="'+(c.commission!=null?c.commission:s.commission)+'"></div>'+
+      '<div class="form-group" style="flex:1"><label class="form-label">佣金公式（d=折后价；纯数字=按%）</label><input class="input" id="cfg_comm_'+s.id+'" value="'+escapeAttr(c.commission!=null?c.commission:s.commission)+'" placeholder="例：6.5 或 d*6.5/100"></div>'+
       '<div class="form-group" style="flex:1"><label class="form-label">汇率（1 '+s.currency+' = X 人民币，手动填写）</label><input class="input" type="number" step="0.0001" id="cfg_rate_'+s.id+'" value="'+(c.rate!=null?c.rate:s.rate)+'"><div class="sp-rate-ref">'+refTxt+'</div></div>'+
       '<div class="form-group" style="flex:2"><label class="form-label">优惠券（满减规则，多条用「；」分隔，如：满200减20；满400减60；留空或0=无）</label><input class="input" id="cfg_coupon_'+s.id+'" value="'+escapeAttr(c.coupon||'')+'" placeholder="满200减20；满400减60"></div>'+
       '</div></div>';
   }).join('');
-  showModal('⚙️ 站点计算配置','<div class="sp-cfg-tip">这些数据统一在这里维护，SKU 定价卡片、售价利润模块都会引用。汇率方向：1 本地货币 = X 人民币（如 PHP 填 0.11，SGD 填 5.28），<b>汇率请手动填写</b>，输入框下方会自动显示当天实时汇率供参考（点「🔄 拉取当天参考汇率」更新）。<br>☑️ <b>勾选「启用」的站点</b>才会出现在 SKU 售价列和详细定价中，后续新增站点只需在这里填公式并勾选启用。</div>'+
+  showModal('⚙️ 站点计算配置','<div class="sp-cfg-tip">这些数据统一在这里维护，SKU 定价卡片、售价利润模块都会引用。汇率方向：1 本地货币 = X 人民币（如 PHP 填 0.11，SGD 填 5.28），<b>汇率请手动填写</b>，输入框下方会自动显示当天实时汇率供参考（点「🔄 拉取当天参考汇率」更新）。<br>☑️ <b>勾选「启用」的站点</b>才会出现在 SKU 售价列和详细定价中，后续新增站点只需在这里填公式并勾选启用。<br>💰 <b>佣金公式</b>：纯数字（如 6.5）= 折后价 × 6.5%；填公式（如 d*6.5/100 或 ROUND(d*6.5/100,0)）则按 d=折后价 直接算出佣金金额，支持 ROUND / MAX / × ÷。</div>'+
     '<div class="sp-cfg-ratebar"><button class="btn btn-sm" id="cfgRateAutoBtn">🔄 拉取当天参考汇率</button><span class="sp-cfg-mini">参考更新：'+(getRatesDate()||'从未拉取')+'</span><span class="sp-cfg-mini" style="color:var(--text-3)">参考值只供对照，不会覆盖手动汇率</span></div>'+
     rows+'<div class="modal-actions"><button class="btn btn-primary" id="cfgSaveBtn">💾 保存配置</button></div>');
   var rab=document.getElementById('cfgRateAutoBtn');
@@ -2265,7 +2278,7 @@ function openCalcCfgModal(){
       var c=siteCalc[s.id]||(siteCalc[s.id]={});
       c.enabled=document.getElementById('cfg_en_'+s.id).checked;
       c.hide=document.getElementById('cfg_hide_'+s.id).value.trim();
-      c.commission=parseFloat(document.getElementById('cfg_comm_'+s.id).value)||0;
+      c.commission=document.getElementById('cfg_comm_'+s.id).value.trim();
       c.rate=parseFloat(document.getElementById('cfg_rate_'+s.id).value)||1;
       c.coupon=document.getElementById('cfg_coupon_'+s.id).value.trim();
     });
