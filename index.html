@@ -461,7 +461,7 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 /* V64: 产品列表定价预览 — per-SKU per-site */
 .sp-pp-bar{margin-top:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
 .sp-pp-sku-line{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;font-size:10.5px;line-height:1.6;width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding:1px 0}
-.sp-pp-sku-name{font-weight:600;color:var(--text);font-size:11.5px;line-height:1.4;display:inline-block;max-width:none;overflow-wrap:normal;padding-right:8px;border-right:1px dashed var(--border-l);margin-right:4px;white-space:nowrap;flex-shrink:0;min-width:100px;max-width:130px}
+.sp-pp-prod-chip{display:inline-flex;align-items:center;font-size:10.5px;padding:1px 6px;background:var(--primary-l);color:var(--primary);border:1px solid var(--primary);border-radius:5px;margin-right:4px;font-weight:700;flex-shrink:0;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4}.sp-pp-prod-chip:empty{display:none}.sp-pp-sku-name{font-weight:600;color:var(--text);font-size:11.5px;line-height:1.4;display:inline-block;max-width:none;overflow-wrap:normal;padding:0 6px;border-right:1px dashed var(--border-l);margin-right:4px;white-space:nowrap;flex-shrink:0;min-width:80px;max-width:130px}.sp-pp-qty-chip{display:inline-flex;align-items:center;font-size:10.5px;padding:1px 6px;background:#fff3cd;color:#856404;border:1px solid #ffe69c;border-radius:5px;font-weight:700;flex-shrink:0;white-space:nowrap;line-height:1.4;margin-right:4px}
 .sp-pp-sku-disc{font-size:9.5px;color:var(--text-3);margin-top:1px;line-height:1.3}
 .sp-pp-sku-disc b{color:var(--text-2);font-weight:500;margin-right:2px}
 .sp-pp-sku-disc .sp-pp-disc-val{color:var(--primary)}
@@ -1346,7 +1346,7 @@ var SITE_CALC_DEFAULT={
   id:{hide:'',commission:5,rate:0.00045,coupon:0,enabled:false}
 };
 var periodCalDate=new Date();
-var APP_VERSION=79;
+var APP_VERSION=80;
 var DEFAULT_BUCKET='U95Cb8XrEnnDPjLyvCoYBo';
 var syncBucketId='',syncTimer=null,syncing=false,syncDirty=false;
 var studyLog=[],srsData={},mistakes=[],achievements=[],dailyState={};
@@ -1856,7 +1856,19 @@ function renderProductPricePreview(p){
   var skus=p.skus||[];
   if(!skus.length)return '';
   var lines=skus.map(function(sk,si){
-    var skuLabel=sk.skuNo||sk.name||('SKU'+(si+1));
+    var skuLabel=sk.name||('规格'+(si+1));
+    var prodLabel=p.name||'';
+    var displaySpec=skuLabel;
+    if(prodLabel){
+      var pn=prodLabel.trim();
+      if(pn&&skuLabel.indexOf(pn)===0){
+        var rest=skuLabel.slice(pn.length).replace(/^[\-\s\.\:]+/,'');
+        if(rest)displaySpec=rest;
+      }
+    }
+    var prodChip='<span class="sp-pp-prod-chip" title="'+escapeAttr(prodLabel||'')+'">'+escapeHtml(prodLabel||'产品')+'</span>';
+    var specChip='<span class="sp-pp-sku-name" title="'+escapeAttr(skuLabel)+'">'+escapeHtml(displaySpec)+'</span>';
+    var qtyChip=(sk.qty&&parseInt(sk.qty)>0)?'<span class="sp-pp-qty-chip">'+parseInt(sk.qty)+'个</span>':'';
     var siteCells=sites.map(function(s){
       var calcHtml=renderSkuSiteCalc(p,sk,si,s.id);
       var pr=(sk.price&&sk.price[s.id])||{};
@@ -1866,7 +1878,7 @@ function renderProductPricePreview(p){
     }).join('');
     var costVal=sk.cost!=null?String(sk.cost):'';
     var costHtml='<span class="sp-pp-site-block sp-pp-cost-block" onclick="event.stopPropagation()"><span class="sp-pp-cell sp-pp-cost-cell"><b>成本</b><input class="sp-pp-price-in" type="number" inputmode="decimal" step="0.01" min="0" data-sku-cost="'+si+'" value="'+costVal+'" placeholder="0" onclick="event.stopPropagation()" onfocus="event.stopPropagation()">¥</span></span>';
-    return '<div class="sp-pp-sku-line" onclick="event.stopPropagation()"><span class="sp-pp-sku-name">'+escapeHtml(skuLabel)+'</span>'+costHtml+siteCells+'</div>';
+    return '<div class="sp-pp-sku-line" onclick="event.stopPropagation()">'+prodChip+specChip+qtyChip+costHtml+siteCells+'</div>';
   }).join('');
   var dateLine='';
   sites.forEach(function(s){

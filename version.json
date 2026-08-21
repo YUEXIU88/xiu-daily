@@ -1,1 +1,1 @@
-{"v":79,"version":79,"forceUpdate":true,"note":"v79: 新增记账本+还款本；标题移到图片旁边；折扣恢复到标题下方；修复SKU价格显示不全"}
+{"v":80,"version":80,"forceUpdate":true,"note":"v80: SKU 行名称拆为「产品名 chip+规格 chip+数量 chip X个」，自动剥产品名前缀"}
