@@ -406,7 +406,7 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 .sp-tb-img{width:72px;height:72px;object-fit:cover;border-radius:10px;display:block;border:1px solid var(--border-l);background:var(--bg)}
 .sp-tb-img.ph{background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--text-3)}
 .sp-tb-img-wrap{padding:4px;background:var(--card);border-radius:12px;border:1px solid var(--border-l);display:inline-block}
-.sp-tb-idx{font-size:11px;color:var(--text-2);font-weight:700;text-align:center;margin-bottom:4px;background:var(--primary-l);color:var(--primary);border-radius:10px;padding:1px 0;letter-spacing:.5px}
+.sp-tb-idx{font-size:10px;font-weight:700;background:var(--primary-l);color:var(--primary);border-radius:8px;padding:1px 7px;display:inline-block;width:fit-content;margin:0 0 4px 0;letter-spacing:.3px}
 .sp-tb-title-wrap{display:flex;align-items:center;gap:6px;width:100%}
 .sp-tb-title{font-weight:700;font-size:13.5px;line-height:1.4;white-space:nowrap;overflow:visible;color:var(--text);flex:1;min-width:0}
 .sp-tb-title-copy{flex:0 0 auto;background:var(--primary-l);border:1px solid var(--primary);color:var(--primary);border-radius:7px;padding:3px 8px;font-size:12px;cursor:pointer;font-weight:600;transition:all .15s ease}
@@ -482,6 +482,12 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 .sp-pp-cell .sp-pp-profit.pos{color:#1e7d34;background:#e6f7ec;border:1px solid #b5e0c2}
 .sp-pp-cell .sp-pp-profit.neg{color:#b22a2a;background:#fde8e8;border:1px solid #f4b4b4}
 .sp-pp-cell .sp-pp-discount-tag{display:inline-block;font-size:9.5px;color:#fff;background:var(--primary);border-radius:7px;padding:0 4px;font-weight:600}
+.sp-pp-disc-inline{display:inline-flex;align-items:center;gap:4px;flex-shrink:0}
+.sp-pp-disc-mini{display:inline-flex;align-items:center;gap:2px;padding:1px 4px 1px 6px;border-radius:5px;background:var(--bg);border:1px solid var(--border-l);font-size:10px;white-space:nowrap;height:18px}
+.sp-pp-disc-mini b{color:var(--text-3);font-weight:600;font-size:10px;margin-right:2px}
+.sp-pp-disc-mini input{width:32px;font-size:11px;border:none;background:transparent;text-align:right;color:var(--primary);font-weight:700;padding:0 2px;font-family:inherit;height:16px;outline:none}
+.sp-pp-disc-mini input:focus{background:#fff;color:var(--primary-d);box-shadow:inset 0 0 0 1px var(--primary);border-radius:3px}
+.sp-pp-disc-mini::after{content:"%";color:var(--text-3);font-size:10px;margin-left:1px}
 .sp-pp-site-block{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;flex-shrink:0;background:var(--bg);border:1px solid var(--border-l);border-radius:7px;padding:2px 5px;white-space:nowrap;flex-wrap:nowrap;font-size:10.5px}
 .sp-pp-site-block>.sp-pp-cell{background:transparent;border:none;padding:1px 3px}
 .sp-pp-site-block>.sp-pp-calc{margin-left:2px;padding:2px 7px;background:var(--card);border:1px solid var(--border);border-radius:7px}
@@ -1298,7 +1304,7 @@ var SITE_CALC_DEFAULT={
   id:{hide:'',commission:5,rate:0.00045,coupon:0,enabled:false}
 };
 var periodCalDate=new Date();
-var APP_VERSION=77;
+var APP_VERSION=78;
 var DEFAULT_BUCKET='U95Cb8XrEnnDPjLyvCoYBo';
 var syncBucketId='',syncTimer=null,syncing=false,syncDirty=false;
 var studyLog=[],srsData={},mistakes=[],achievements=[],dailyState={};
@@ -1807,7 +1813,14 @@ function renderProductPricePreview(p){
   if(!sites.length)return '';
   var skus=p.skus||[];
   if(!skus.length)return '';
+  // 产品级折扣 mini（仅在首个 SKU 名后显示一次）
+  var discInline=sites.map(function(s){
+    var dv=(p.disc&&p.disc[s.id]!=null&&p.disc[s.id]!=="")?p.disc[s.id]:prodDisc(p,s.id);
+    return '<span class="sp-pp-disc-mini" onclick="event.stopPropagation()"><b>'+s.name.charAt(0)+'</b><input class="sp-disc-prod-in sp-disc-mini-in" data-prod-disc="'+s.id+'" type="number" step="0.1" min="0" value="'+dv+'" onclick="this.select()" placeholder="0">%</span>';
+  }).join('');
+  var discHtml='<span class="sp-pp-disc-inline" onclick="event.stopPropagation()">'+discInline+'</span>';
   var lines=skus.map(function(sk,si){
+    var isFirst=si===0;
     var skuLabel=sk.skuNo||sk.name||('SKU'+(si+1));
     var siteCells=sites.map(function(s){
       var calcHtml=renderSkuSiteCalc(p,sk,si,s.id);
@@ -1818,7 +1831,7 @@ function renderProductPricePreview(p){
     }).join('');
     var costVal=sk.cost!=null?String(sk.cost):'';
     var costHtml='<span class="sp-pp-site-block sp-pp-cost-block" onclick="event.stopPropagation()"><span class="sp-pp-cell sp-pp-cost-cell"><b>成本</b><input class="sp-pp-price-in" type="number" inputmode="decimal" step="0.01" min="0" data-sku-cost="'+si+'" value="'+costVal+'" placeholder="0" onclick="event.stopPropagation()" onfocus="event.stopPropagation()">¥</span></span>';
-    return '<div class="sp-pp-sku-line" onclick="event.stopPropagation()"><span class="sp-pp-sku-name">'+escapeHtml(skuLabel)+'</span>'+costHtml+siteCells+'</div>';
+    return '<div class="sp-pp-sku-line" onclick="event.stopPropagation()"><span class="sp-pp-sku-name">'+escapeHtml(skuLabel)+'</span>'+(isFirst?discHtml:"")+costHtml+siteCells+'</div>';
   }).join('');
   var dateLine='';
   sites.forEach(function(s){
@@ -1848,7 +1861,7 @@ function renderProductGrid(){
     var actions='<button class="act-btn" data-act="toggle" title="展开/收起">'+arrow+'</button><button class="act-btn" data-act="edit">✏️</button><button class="act-btn" data-act="copy" title="复制产品">📋</button><button class="act-btn danger" data-act="del">🗑️</button>'+(p.link?'<a class="act-btn" href="'+escapeAttr(p.link)+'" target="_blank">🔗</a>':'');
     var fullT=escapeHtml(p.title||p.name);
     var titleWrap='<div class="sp-tb-title-wrap"><div class="sp-tb-title" title="'+escapeAttr(p.title||p.name)+'">'+fullT+'</div><button class="sp-tb-title-copy" data-act="copyTitle" title="复制标题到剪贴板">📋 复制</button></div>';
-    return '<tr data-pid="'+p.id+'" class="sp-main-row'+(exp?' exp':'')+'"><td class="col-img">'+img+prodDiscInputs(p)+renderProductPricePreview(p)+'</td><td class=\"col-title\">'+titleWrap+(p.title&&p.title!==p.name?'<div class=\"sp-tb-sub\">'+escapeHtml(p.name)+'</div>':'')+'</td><td class="col-cat">'+(p.category?escapeHtml(p.category):'<span style="color:var(--text-3)">—</span>')+'</td><td class="col-sku"><div class="sp-tb-skunum">'+skuN+'</div></td><td class="col-status">'+prodStatusBadge(p.status)+'</td><td class="col-act">'+actions+'</td></tr>'+
+    return '<tr data-pid="'+p.id+'" class="sp-main-row'+(exp?' exp':'')+'"><td class="col-img">'+img+renderProductPricePreview(p)+'</td><td class=\"col-title\">'+titleWrap+(p.title&&p.title!==p.name?'<div class=\"sp-tb-sub\">'+escapeHtml(p.name)+'</div>':'')+'</td><td class="col-cat">'+(p.category?escapeHtml(p.category):'<span style="color:var(--text-3)">—</span>')+'</td><td class="col-sku"><div class="sp-tb-skunum">'+skuN+'</div></td><td class="col-status">'+prodStatusBadge(p.status)+'</td><td class="col-act">'+actions+'</td></tr>'+
       '<tr class="sp-detail-row'+(exp?' open':'')+'" data-pid="'+p.id+'"><td colspan="6"><div class="sp-detail-wrap">'+
         '<div class="sp-detail-title">💸 成本 / 重量</div>'+prodCostWeightHtml(p)+
         '<div class="sp-detail-title" style="margin-top:10px">🔢 SKU 明细（'+skuN+'）</div>'+
