@@ -1,1 +1,6 @@
-{"v":81,"version":81,"forceUpdate":true,"note":"v81: SKU号统一规则「标题-规格-数量个」；利润气泡显示费用明细（藏价/佣金/优惠券/成本）"}
+{
+  "v": 82,
+  "version": 82,
+  "forceUpdate": true,
+  "note": "V82: SKU号严格三段式「产品中文名-规格-数量个」+ 中文检测保险（修复英文title fallback bug + 变体剥前缀误吞字尾 fix）"
+}

@@ -1346,7 +1346,7 @@ var SITE_CALC_DEFAULT={
   id:{hide:'',commission:5,rate:0.00045,coupon:0,enabled:false}
 };
 var periodCalDate=new Date();
-var APP_VERSION=81;
+var APP_VERSION=82;
 var DEFAULT_BUCKET='U95Cb8XrEnnDPjLyvCoYBo';
 var syncBucketId='',syncTimer=null,syncing=false,syncDirty=false;
 var studyLog=[],srsData={},mistakes=[],achievements=[],dailyState={};
@@ -1826,22 +1826,53 @@ function collectAllSkuNos(){var set={};spProducts.forEach(function(p){(p.skus||[
 function genSkuNoFrom(prodName,skuName,qty){var clean=function(s){s=(s||'').trim().replace(/\s+/g,' ').replace(/\s*#\s*/g,' #');s=s.replace(/[^\w\u4e00-\u9fa5# ]+/g,'-').replace(/-{2,}/g,'-').replace(/^-|-$/g,'');return s.substring(0,30);};return clean(prodName)+'-'+clean(skuName)+'-'+(parseInt(qty)||1)+'个';}
 // V81: SKU 号显示规则 = 标题(含#变体) + '-' + 规格(剥离产品名/变体前缀) + '-' + 数量个
 function buildSkuNoLabel(p,sk,si){
-  var skuLabel=(sk.name||'').trim()||('\u89c4\u683c'+(si+1));
-  var prodLabel=(p.title||p.name||'').trim();
-  if(!prodLabel)return skuLabel;
+  // V82: 三段式【产品名称（含#变体）-规格-数量个】
+  // 第一段：优先取含中文的字段作为产品名（避免 fallback 到英文 title/name）
+  var cnRe=/[\u4e00-\u9fa5]/;
+  var tStr=(p.title||'').trim(),nStr=(p.name||'').trim();
+  var prodLabel='';
+  if(tStr&&cnRe.test(tStr)) prodLabel=tStr;
+  else if(nStr&&cnRe.test(nStr)) prodLabel=nStr;
+  else if(tStr) prodLabel=tStr;
+  else if(nStr) prodLabel=nStr;
+  var fallbackSku=!prodLabel;
+  // 第二段：规格，自动剥离 prodLabel / 产品名 / 变体前缀
+  var skuLabel=(sk.name||'').trim()||(sk.skuNo||'').trim();
+  if(!skuLabel) skuLabel='\u89c4\u683c'+(si+1);
   var rest=skuLabel;
-  if(rest.indexOf(prodLabel)===0){rest=rest.slice(prodLabel.length);}
-  else{
-    var hi=prodLabel.indexOf('#');
-    var base=hi>-1?prodLabel.slice(0,hi).trim():prodLabel;
-    if(base&&rest.indexOf(base)===0)rest=rest.slice(base.length);
-    if(hi>-1){var vari=prodLabel.slice(hi+1).trim();if(vari&&rest.replace(/^[\-\s\.\:]+/,'').indexOf(vari)===0)rest=rest.replace(/^[\-\s\.\:]+/,'').slice(vari.length);}
+  if(prodLabel){
+    if(rest.indexOf(prodLabel)===0) rest=rest.slice(prodLabel.length);
+    else{
+      var hi=prodLabel.indexOf('#');
+      var base=hi>-1?prodLabel.slice(0,hi).replace(/[\s]+$/,''):prodLabel;
+      if(base&&rest.indexOf(base)===0) rest=rest.slice(base.length);
+      if(hi>-1){
+        var vari=prodLabel.slice(hi+1).replace(/^[\s]+|[\s]+$/g,'');
+        if(vari){
+          var stripped=rest.replace(/^[\-\s\.\:]+/,'');
+          if(stripped.indexOf(vari)===0){
+            var after=stripped.slice(vari.length).replace(/^[\-\s\.\:]+/,'');
+            // V82-fix: 如果剥完只剩 ≤2 字符（被误吞字尾如"目"），则保留原 spec
+            rest=(after.length<=2 && skuLabel.length>after.length)?stripped:after;
+          }else{
+            rest=stripped;
+          }
+        }
+      }
+    }
   }
-  rest=rest.replace(/^[\-\s\.\:]+/,'').replace(/[\-\s]+$/,'');
-  var label=prodLabel;
-  if(rest)label+='-'+rest;
+  rest=rest.replace(/^[\-\s\.\:]+/,'').replace(/[\-\s\.]+$/,'');
+  // 第三段：数量个（>0 才显示）
   var q=parseInt(sk.qty)||0;
-  if(q>0)label+='-'+q+'\u4e2a';
+  // 兜底：若无 prodLabel，用 skuLabel 作为产品名段
+  if(fallbackSku){
+    var fb=skuLabel;
+    if(q>0) fb+='-'+q+'\u4e2a';
+    return fb;
+  }
+  var label=prodLabel;
+  if(rest) label+='-'+rest;
+  if(q>0) label+='-'+q+'\u4e2a';
   return label;
 }
 function checkSkuNoDuplicate(skuNo,excludePid){for(var i=0;i<spProducts.length;i++){var p=spProducts[i];if(p.id===excludePid)continue;for(var j=0;j<(p.skus||[]).length;j++){if((p.skus[j].skuNo||'')===skuNo)return true;}}return false;}
