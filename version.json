@@ -1,6 +1,6 @@
 {
-  "v": 71,
-  "version": 71,
+  "v": 72,
+  "version": 72,
   "forceUpdate": true,
-  "note": "v71: 修复笔记刷新丢失(pullSyncData改合并+pagehide保存+doSync限60KB) + 工具栏新增分割线/emoji面板/待办清单"
+  "note": "v72: 笔记本工具栏新增 🎤 语音转文字(webkitSpeechRecognition zh-CN)+ 🖼️ 图片插入(FileReader压缩800px JPEG+insertImage)；图片样式圆角自适应；psNotes 超 40KB 跳过云同步保留本地"
 }

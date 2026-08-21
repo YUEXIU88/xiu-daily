@@ -728,6 +728,10 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 .ne-rt font[size="5"]{font-size:28px}
 .ne-rt font[size="6"]{font-size:36px}
 .ne-rt font[size="7"]{font-size:48px}
+.ne-rt img{max-width:100%;height:auto;border-radius:6px;margin:6px 0;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+.ne-toolbar .ne-tbtn.recording{background:#d9534f;color:#fff;border-color:#d9534f;animation:neRecPulse 1s infinite}
+@keyframes neRecPulse{0%,100%{opacity:1}50%{opacity:0.55}}
+.ne-toolbar .ne-tbtn.voice-unsupported{opacity:0.35;cursor:not-allowed}
 .ne-rt hr{border:none;border-top:2px dashed var(--border);margin:14px 0}
 .ne-rt .ne-todo{display:flex;align-items:flex-start;gap:6px;margin:3px 0;cursor:pointer}
 .ne-rt .ne-todo input[type=checkbox]{margin-top:4px;flex-shrink:0;accent-color:var(--primary)}
@@ -1286,7 +1290,7 @@ var SITE_CALC_DEFAULT={
   id:{hide:'',commission:5,rate:0.00045,coupon:0,enabled:false}
 };
 var periodCalDate=new Date();
-var APP_VERSION=71;
+var APP_VERSION=72;
 var DEFAULT_BUCKET='U95Cb8XrEnnDPjLyvCoYBo';
 var syncBucketId='',syncTimer=null,syncing=false,syncDirty=false;
 var studyLog=[],srsData={},mistakes=[],achievements=[],dailyState={};
@@ -1368,7 +1372,7 @@ function collectAllData(){var cleanProds=(spProducts||[]).map(function(p){var c=
 function getUserDataKey(){var cu=getCurrentUser();return cu?('ud_'+cu):'data';}
 function avatarCloudKey(){var cu=getCurrentUser();return cu?('ud_'+cu+'_avatar'):'';}
 function saveSyncStatus(s){try{localStorage.setItem('xiu_sync_status',JSON.stringify(s));}catch(e){}}function loadSyncStatus(){try{return JSON.parse(localStorage.getItem('xiu_sync_status')||'{}');}catch(e){return {};}}function fmtSyncStatus(){var s=loadSyncStatus();if(!s||!s.lastTry)return '尚未同步';var d=new Date(s.lastTry);var t=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');return (s.ok?'✅':'❌')+' '+t+' · '+s.msg;}async function doSync(){if(!syncBucketId||syncing)return false;syncing=true;var ts=Date.now();saveSyncStatus({lastTry:ts,ok:false,msg:'同步中…'});try{var av=avatarCloudKey();if(av){try{var avd=getAvatar();if(avd){var ar=await fetchT('https://kvdb.io/'+syncBucketId+'/'+av,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({a:avd})});if(!ar.ok)throw new Error('avatar upload failed');}else{await fetchT('https://kvdb.io/'+syncBucketId+'/'+av,{method:'DELETE'});}}catch(e){saveSyncStatus({lastTry:ts,ok:false,msg:'头像上传失败'});showToast('头像同步失败');syncing=false;return false;}}var imgMap={};var imgUps=[];try{(spProducts||[]).forEach(function(p){if(p&&p.id&&p.img)imgMap[p.id]=_hashShort(p.img);});var syncedImgs={};try{syncedImgs=JSON.parse(localStorage.getItem('xiu_img_synced')||'{}');}catch(e){}(spProducts||[]).forEach(function(p){if(!p||!p.img||!p.id)return;var h=imgMap[p.id];if(syncedImgs[p.id]===h)return;imgUps.push(new Promise(function(res){compressCloudImg(p.img,function(ci){if(!ci){res();return;}fetchT('https://kvdb.io/'+syncBucketId+'/'+_cloudImgKey(p.id),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({i:ci})}).then(function(r){if(r.ok)syncedImgs[p.id]=h;res();}).catch(function(){res();});});}));});try{await Promise.all(imgUps);localStorage.setItem('xiu_img_synced',JSON.stringify(syncedImgs));}catch(e){}}catch(e){}
-var data=collectAllData();try{data.imgMap=imgMap;}catch(e){}var body=JSON.stringify(data);if(body.length>60000){showToast('同步数据过大('+Math.round(body.length/1024)+'KB)，请先导出备份');saveSyncStatus({lastTry:ts,ok:false,msg:'数据过大'});syncing=false;return false;}var resp=await fetchT('https://kvdb.io/'+syncBucketId+'/'+getUserDataKey(),{method:'PUT',headers:{'Content-Type':'application/json'},body:body});if(!resp.ok){var reason=resp.status===403?'云端存储未验证':('同步失败 HTTP '+resp.status);saveSyncStatus({lastTry:ts,ok:false,msg:reason});showToast(reason);syncing=false;return false;}saveSyncStatus({lastTry:ts,ok:true,msg:'同步成功'});updateSyncBtn(true);syncing=false;return true;}catch(e){saveSyncStatus({lastTry:ts,ok:false,msg:'网络错误'});syncing=false;return false;}}
+var data=collectAllData();try{data.imgMap=imgMap;}catch(e){}var body=JSON.stringify(data);if(body.length>60000){var psNotesSize=JSON.stringify(psNotes||[]).length;if(psNotesSize>40000){showToast('笔记图片较多('+Math.round(psNotesSize/1024)+'KB)，已保存本地但未上传云端');saveSyncStatus({lastTry:ts,ok:false,msg:'笔记过大未同步'});syncing=false;return true;}showToast('同步数据过大('+Math.round(body.length/1024)+'KB)，请先导出备份');saveSyncStatus({lastTry:ts,ok:false,msg:'数据过大'});syncing=false;return false;}var resp=await fetchT('https://kvdb.io/'+syncBucketId+'/'+getUserDataKey(),{method:'PUT',headers:{'Content-Type':'application/json'},body:body});if(!resp.ok){var reason=resp.status===403?'云端存储未验证':('同步失败 HTTP '+resp.status);saveSyncStatus({lastTry:ts,ok:false,msg:reason});showToast(reason);syncing=false;return false;}saveSyncStatus({lastTry:ts,ok:true,msg:'同步成功'});updateSyncBtn(true);syncing=false;return true;}catch(e){saveSyncStatus({lastTry:ts,ok:false,msg:'网络错误'});syncing=false;return false;}}
 async function pullSyncData(){if(!syncBucketId)return false;try{var avk=avatarCloudKey();if(avk){try{var avr=await fetchT('https://kvdb.io/'+syncBucketId+'/'+avk,{},10000);if(avr.ok){var avj=await avr.json();if(avj&&avj.a){var avu=getCurrentUser();if(avu){try{localStorage.setItem('xiu_avatar_'+avu,avj.a);updateAvatarUI();}catch(e){}}}}}catch(e){}}var resp=await fetchT('https://kvdb.io/'+syncBucketId+'/'+getUserDataKey(),{},10000);if(!resp.ok)return false;var data=await resp.json();if(data&&data.v){if(data.userSentences){var _um={};(data.userSentences||[]).forEach(function(x){if(x&&x.id)_um[x.id]=x;});(userSentences||[]).forEach(function(x){if(x&&x.id)_um[x.id]=x;});userSentences=[];for(var _uk in _um)userSentences.push(_um[_uk]);}if(data.favorites){var _fm={};(data.favorites||[]).forEach(function(x){if(x&&x.id)_fm[x.id]=x;});(favorites||[]).forEach(function(x){if(x&&x.id)_fm[x.id]=x;});favorites=[];for(var _fk in _fm)favorites.push(_fm[_fk]);}if(data.customOrder){var _co=[];(customOrder||[]).forEach(function(x){if(_co.indexOf(x)===-1)_co.push(x);});(data.customOrder||[]).forEach(function(x){if(_co.indexOf(x)===-1)_co.push(x);});customOrder=_co;}if(data.customCats){var _cm={};(data.customCats||[]).forEach(function(x){if(x&&x.id)_cm[x.id]=x;});(customCats||[]).forEach(function(x){if(x&&x.id)_cm[x.id]=x;});customCats=[];for(var _ck in _cm)customCats.push(_cm[_ck]);}if(data.catOrder&&(!catOrder||!catOrder.length))catOrder=data.catOrder;if(data.catNames){var _cn={};for(var _k in data.catNames)_cn[_k]=data.catNames[_k];for(var _k2 in catNames)_cn[_k2]=catNames[_k2];catNames=_cn;}if(data.sentCatOv){var _so={};for(var _k3 in data.sentCatOv)_so[_k3]=data.sentCatOv[_k3];for(var _k4 in sentCatOv)_so[_k4]=sentCatOv[_k4];sentCatOv=_so;}if(data.wordFavorites){var _wm={};(data.wordFavorites||[]).forEach(function(x){if(x&&x.id)_wm[x.id]=x;});(wordFavorites||[]).forEach(function(x){if(x&&x.id)_wm[x.id]=x;});wordFavorites=[];for(var _wk in _wm)wordFavorites.push(_wm[_wk]);}if(data.spProducts){var localImg={};(spProducts||[]).forEach(function(p){if(p.img)localImg[p.id]=p.img;});data.spProducts.forEach(function(p){if(!p.img&&localImg[p.id])p.img=localImg[p.id];});spProducts=data.spProducts;
 if(data.imgMap){try{var pulledImgs={};try{pulledImgs=JSON.parse(localStorage.getItem('xiu_img_pulled')||'{}');}catch(e){}var pulls=[];spProducts.forEach(function(p){if(!p.img&&data.imgMap[p.id]&&pulledImgs[p.id]!==data.imgMap[p.id]){pulls.push(fetchT('https://kvdb.io/'+syncBucketId+'/'+_cloudImgKey(p.id),{},10000).then(function(r){if(r.ok)return r.json();throw new Error('e');}).then(function(j){if(j&&j.i){p.img=j.i;pulledImgs[p.id]=data.imgMap[p.id];}}).catch(function(){}));}});if(pulls.length)Promise.all(pulls).then(function(){try{localStorage.setItem('xiu_img_pulled',JSON.stringify(pulledImgs));}catch(e){}saveData(SK.spProducts,spProducts);try{var cur=currentModule;if(cur&&MODULES[cur])switchModule(cur,true);}catch(e){}});}catch(e){}}}if(data.spPricing)spPricing=data.spPricing;if(data.spOrders)spOrders=data.spOrders;if(data.spAds)spAds=data.spAds;if(data.siteCalc){siteCalc=data.siteCalc;SHOPEE_SITES.forEach(function(s){if(!siteCalc[s.id])siteCalc[s.id]={hide:'',commission:s.commission,rate:s.rate,coupon:0};});ensureSiteCalc();}if(data.ftCustomers)ftCustomers=data.ftCustomers;if(data.ftDocuments)ftDocuments=data.ftDocuments;if(data.psNotes){var _nm={};(data.psNotes||[]).forEach(function(x){if(x&&x.id)_nm[x.id]=x;});(psNotes||[]).forEach(function(x){if(x&&x.id)_nm[x.id]=x;});psNotes=[];for(var _nk in _nm)psNotes.push(_nm[_nk]);}if(data.psPeriods)psPeriods=data.psPeriods;if(data.studyLog)studyLog=data.studyLog;if(data.srsData)srsData=data.srsData;if(data.mistakes)mistakes=data.mistakes;if(data.achievements)achievements=data.achievements;if(data.dailyState)dailyState=data.dailyState;if(data.interviewCustom){var _ivm={};(data.interviewCustom||[]).forEach(function(x){if(x&&x.id)_ivm[x.id]=x;});(interviewCustom||[]).forEach(function(x){if(x&&x.id)_ivm[x.id]=x;});interviewCustom=[];for(var _ivk in _ivm)interviewCustom.push(_ivm[_ivk]);}if(data.avatar){var avu2=getCurrentUser();if(avu2){try{localStorage.setItem('xiu_avatar_'+avu2,data.avatar);}catch(e){}}}if(data.theme){currentTheme=data.theme;setTheme(data.theme);}saveAllData();rebuildAllSentences();applyCustomOrder();updateSyncBtn(true);}return true;}catch(e){return false;}}
 // ==================== THEME ====================
@@ -2910,6 +2914,9 @@ function openNoteEditor(nid){
   $('psNoteEditor').innerHTML=
     '<div class="form-group"><input class="input" id="neTitle" value="'+escapeAttr(n.title||'')+'" placeholder="标题" style="font-size:16px;font-weight:600"></div>'+
     '<div class="ne-toolbar" id="neToolbar">'+
+      '<button class="ne-tbtn" id="neVoiceBtn" title="语音转文字">🎤</button>'+
+      '<button class="ne-tbtn" id="neImgBtn" title="插入图片">🖼️</button>'+
+      '<input type="file" id="neImgInput" accept="image/*" style="display:none">'+      '<span class="ne-sep"></span>'+
       '<button class="ne-tbtn" data-cmd="bold" title="加粗" style="font-weight:800">B</button>'+
       '<button class="ne-tbtn" data-cmd="italic" title="斜体" style="font-style:italic">I</button>'+
       '<button class="ne-tbtn" data-cmd="underline" title="下划线" style="text-decoration:underline">U</button>'+
@@ -2971,6 +2978,119 @@ function openNoteEditor(nid){
   var cp=$('neColorPicker');
   cp.addEventListener('mousedown',neSaveSel);
   cp.addEventListener('input',function(){rt.focus();neRestoreSel();document.execCommand('foreColor',false,this.value);neSaveSel();updateNeToolbar();});
+  // ===== V72: 图片插入 =====
+  var neImgBtn=$('neImgBtn'),neImgInput=$('neImgInput');
+  function neCompressImg(dataUrl,maxW,cb){
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var sc=Math.min(1,maxW/Math.max(img.width,img.height));
+        var cv=document.createElement('canvas');
+        cv.width=Math.max(1,Math.round(img.width*sc));
+        cv.height=Math.max(1,Math.round(img.height*sc));
+        cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+        cb(cv.toDataURL('image/jpeg',0.7));
+      }catch(e){cb(null);}
+    };
+    img.onerror=function(){cb(null);};
+    img.src=dataUrl;
+  }
+  if(neImgBtn){
+    neImgBtn.addEventListener('mousedown',function(e){e.preventDefault();});
+    neImgBtn.addEventListener('click',function(){if(neImgInput)neImgInput.click();});
+  }
+  if(neImgInput){
+    neImgInput.addEventListener('change',function(e){
+      var file=e.target.files&&e.target.files[0];
+      if(!file)return;
+      if(file.size>5*1024*1024){showToast('图片过大(>5MB)，请选择更小的');e.target.value='';return;}
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        neCompressImg(ev.target.result,800,function(compressed){
+          if(!compressed){showToast('图片处理失败');return;}
+          rt.focus();neRestoreSel();
+          document.execCommand('insertImage',false,compressed);
+          // 默认图片块独占一行
+          try{
+            var sel=window.getSelection();
+            if(sel&&sel.rangeCount){
+              var node=sel.anchorNode;
+              while(node&&node!==rt){if(node.nodeType===1&&node.tagName==='IMG')break;node=node.parentNode;}
+              if(node&&node.tagName==='IMG'){
+                var br=document.createElement('br');
+                node.parentNode.insertBefore(br,node.nextSibling);
+                var r=document.createRange();r.setStartAfter(br);r.collapse(true);
+                sel.removeAllRanges();sel.addRange(r);
+              }
+            }
+          }catch(e){}
+          neSaveSel();rt.focus();
+          showToast('图片已插入');
+        });
+      };
+      reader.onerror=function(){showToast('读取图片失败');};
+      reader.readAsDataURL(file);
+      e.target.value='';
+    });
+  }
+
+  // ===== V72: 语音转文字 =====
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  var srInstance=null,srActive=false,neVoiceBtn=$('neVoiceBtn');
+  if(neVoiceBtn){
+    if(!SR){
+      neVoiceBtn.classList.add('voice-unsupported');
+      neVoiceBtn.title='当前浏览器不支持语音识别（请用 Chrome）';
+    }
+    neVoiceBtn.addEventListener('mousedown',function(e){e.preventDefault();});
+    neVoiceBtn.addEventListener('click',function(){
+      if(!SR){showToast('当前浏览器不支持语音识别，请用 Chrome 桌面/安卓版');return;}
+      if(srActive){
+        try{srInstance.stop();}catch(e){}
+        srActive=false;
+        neVoiceBtn.classList.remove('recording');
+        neVoiceBtn.textContent='🎤';
+        return;
+      }
+      try{
+        srInstance=new SR();
+        srInstance.lang='zh-CN';
+        srInstance.continuous=true;
+        srInstance.interimResults=true;
+        var finalBuf='';
+        srInstance.onresult=function(ev){
+          var last=ev.results[ev.results.length-1];
+          var text=last[0].transcript;
+          if(last.isFinal){
+            finalBuf+=text;
+            rt.focus();neRestoreSel();
+            document.execCommand('insertText',false,text);
+            neSaveSel();
+          }
+        };
+        srInstance.onerror=function(ev){
+          var err=ev.error||'unknown';
+          showToast('语音识别失败: '+err+(err==='not-allowed'?'（请允许麦克风权限）':''));
+          srActive=false;
+          neVoiceBtn.classList.remove('recording');
+          neVoiceBtn.textContent='🎤';
+        };
+        srInstance.onend=function(){
+          srActive=false;
+          neVoiceBtn.classList.remove('recording');
+          neVoiceBtn.textContent='🎤';
+        };
+        srInstance.start();
+        srActive=true;
+        neVoiceBtn.classList.add('recording');
+        neVoiceBtn.textContent='🔴';
+        showToast('开始录音，点击 🔴 停止');
+      }catch(e){
+        showToast('启动语音识别失败: '+e.message);
+      }
+    });
+  }
+
   // ===== V71: 分割线/emoji/待办 =====
   var NE_EMOJIS=['😀','😎','🤔','😍','😭','😂','😅','🥰','😴','🤯','🥳','😱','🤗','🙄','😏','😬','🤤','🥺','😇','🤩','🔥','✨','⭐','🌟','💫','💯','🎉','🎊','🎈','🎁','🏆','🥇','💪','👍','👎','👏','🙌','🤝','✌️','🤞','👀','💀','👻','🤖','💩','🌸','🌺','🌻','🌹','🌷','🍀','🌿','🌱','🌳','🌞','🌈','☁️','🌧️','⚡','❄️','☃️','🌊','🍎','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍒','🍑','🥭','🍍','🥥','🍅','🥑','🥦','🌽','🍞','🧀','🍗','🍔','🍟','🍕','🌭','🌮','🌯','🍜','🍣','🍱','🍰','🧁','☕','🍵','🧋','🍺','🍷','🥤','💧','📝','✏️','📌','📍','📎','🔗','💡','🧠','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','💕','💖','💘','💝','⚛️','🔔','📢','💬','💭','☠️','♻️','✅','❌','❗','❓','⚠️','🚫','💰','💸','💳','📦','🚚','✈️','🚗','🏠','🏢','🏫','🏥','🏪','🌐','🕑','📅','📊','📈','📉','🔍','🛒','📦','✉️','📞','📱','💻','⌨️','🖥️','🖨️','📷','🎮','🎵','🎶','🎬','🎤','🎧','_radio','🧲','🔒','🔑','🛡️','⚙️','🔧','🔨','🛠️','⚙️','🧰','🧲','🔮','🪄','🧪','🧫','🧬','🔬','🔭','📡','💉','🩹','🩺','💊','🚪','🛏️','🛋️','🚿','🛁','🪒','🧴','🧷','🧹','🧺','🧻','🪣','🧼','🪟','🛒','🎁','🎈','🎀','🛍️','💳','💲','💴','💶','💷','🪙','💰','💸','🧾','📈','📊'];
   var emojiPanel=$('neEmojiPanel');
