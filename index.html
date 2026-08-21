@@ -461,7 +461,7 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 /* V64: 产品列表定价预览 — per-SKU per-site */
 .sp-pp-bar{margin-top:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
 .sp-pp-sku-line{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;font-size:10.5px;line-height:1.6;width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;padding:1px 0}
-.sp-pp-prod-chip{display:inline-flex;align-items:center;font-size:10.5px;padding:1px 6px;background:var(--primary-l);color:var(--primary);border:1px solid var(--primary);border-radius:5px;margin-right:4px;font-weight:700;flex-shrink:0;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4}.sp-pp-prod-chip:empty{display:none}.sp-pp-sku-name{font-weight:600;color:var(--text);font-size:11.5px;line-height:1.4;display:inline-block;max-width:none;overflow-wrap:normal;padding:0 6px;border-right:1px dashed var(--border-l);margin-right:4px;white-space:nowrap;flex-shrink:0;min-width:80px;max-width:130px}.sp-pp-qty-chip{display:inline-flex;align-items:center;font-size:10.5px;padding:1px 6px;background:#fff3cd;color:#856404;border:1px solid #ffe69c;border-radius:5px;font-weight:700;flex-shrink:0;white-space:nowrap;line-height:1.4;margin-right:4px}
+.sp-pp-prod-chip{display:inline-flex;align-items:center;font-size:10.5px;padding:1px 6px;background:var(--primary-l);color:var(--primary);border:1px solid var(--primary);border-radius:5px;margin-right:4px;font-weight:700;flex-shrink:0;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4}.sp-pp-prod-chip:empty{display:none}.sp-pp-skuno-chip{display:inline-flex;align-items:center;font-size:11px;padding:1px 8px;background:var(--primary-l);color:var(--primary);border:1px solid var(--primary);border-radius:6px;margin-right:6px;font-weight:700;flex-shrink:0;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.5}.sp-pp-sku-name{font-weight:600;color:var(--text);font-size:11.5px;line-height:1.4;display:inline-block;max-width:none;overflow-wrap:normal;padding:0 6px;border-right:1px dashed var(--border-l);margin-right:4px;white-space:nowrap;flex-shrink:0;min-width:80px;max-width:130px}.sp-pp-qty-chip{display:inline-flex;align-items:center;font-size:10.5px;padding:1px 6px;background:#fff3cd;color:#856404;border:1px solid #ffe69c;border-radius:5px;font-weight:700;flex-shrink:0;white-space:nowrap;line-height:1.4;margin-right:4px}
 .sp-pp-sku-disc{font-size:9.5px;color:var(--text-3);margin-top:1px;line-height:1.3}
 .sp-pp-sku-disc b{color:var(--text-2);font-weight:500;margin-right:2px}
 .sp-pp-sku-disc .sp-pp-disc-val{color:var(--primary)}
@@ -472,7 +472,7 @@ body{font-family:var(--sans);background:var(--bg-grad);background-attachment:fix
 .sp-pp-price-in[type=number]{-moz-appearance:textfield}
 .sp-pp-calc{display:inline-flex;align-items:center;gap:5px;margin-left:6px;padding:2px 6px;background:var(--card);border:1px solid var(--border-l);border-radius:8px;white-space:nowrap}
 .sp-pp-calc .sp-pp-final{font-size:12.5px;font-weight:700;color:var(--primary)}
-.sp-pp-calc .sp-pp-cny{font-size:11px;color:var(--text-3);font-weight:500}
+.sp-pp-calc .sp-pp-cny{font-size:11px;color:var(--text-3);font-weight:500}.sp-pp-calc .sp-pp-fees{font-size:10px;color:var(--text-3);font-weight:600;background:var(--bg);padding:1px 5px;border-radius:8px;cursor:help}
 .sp-pp-calc .sp-pp-profit{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
 .sp-pp-calc .sp-pp-profit.pos{color:#1e7d34;background:#e6f7ec;border:1px solid #b5e0c2}
 .sp-pp-calc .sp-pp-profit.neg{color:#b22a2a;background:#fde8e8;border:1px solid #f4b4b4}
@@ -1346,7 +1346,7 @@ var SITE_CALC_DEFAULT={
   id:{hide:'',commission:5,rate:0.00045,coupon:0,enabled:false}
 };
 var periodCalDate=new Date();
-var APP_VERSION=80;
+var APP_VERSION=81;
 var DEFAULT_BUCKET='U95Cb8XrEnnDPjLyvCoYBo';
 var syncBucketId='',syncTimer=null,syncing=false,syncDirty=false;
 var studyLog=[],srsData={},mistakes=[],achievements=[],dailyState={};
@@ -1823,7 +1823,27 @@ function prodSiteDays(p,sid){var d=p&&p.listed&&p.listed[sid];if(!d)return null;
 function prodNewOld(p){var days=null;if(p&&p.listed){for(var k in p.listed){if(p.listed[k]){var dd=prodSiteDays(p,k);if(dd!==null&&(days===null||dd<days))days=dd;}}}return days;}
 function prodSiteTag(p,sid){var dd=prodSiteDays(p,sid);if(dd===null)return null;return dd<=30?'new':'old';}
 function collectAllSkuNos(){var set={};spProducts.forEach(function(p){(p.skus||[]).forEach(function(s){if(s.skuNo)set[s.skuNo]=1;});});return set;}
-function genSkuNoFrom(prodName,skuName,qty){var clean=function(s){return(s||'').trim().replace(/[^\w\u4e00-\u9fa5]+/g,'-').replace(/^-|-$/g,'').substring(0,20);};return clean(prodName)+'-'+clean(skuName)+'-'+(parseInt(qty)||1)+'个';}
+function genSkuNoFrom(prodName,skuName,qty){var clean=function(s){s=(s||'').trim().replace(/\s+/g,' ').replace(/\s*#\s*/g,' #');s=s.replace(/[^\w\u4e00-\u9fa5# ]+/g,'-').replace(/-{2,}/g,'-').replace(/^-|-$/g,'');return s.substring(0,30);};return clean(prodName)+'-'+clean(skuName)+'-'+(parseInt(qty)||1)+'个';}
+// V81: SKU 号显示规则 = 标题(含#变体) + '-' + 规格(剥离产品名/变体前缀) + '-' + 数量个
+function buildSkuNoLabel(p,sk,si){
+  var skuLabel=(sk.name||'').trim()||('\u89c4\u683c'+(si+1));
+  var prodLabel=(p.title||p.name||'').trim();
+  if(!prodLabel)return skuLabel;
+  var rest=skuLabel;
+  if(rest.indexOf(prodLabel)===0){rest=rest.slice(prodLabel.length);}
+  else{
+    var hi=prodLabel.indexOf('#');
+    var base=hi>-1?prodLabel.slice(0,hi).trim():prodLabel;
+    if(base&&rest.indexOf(base)===0)rest=rest.slice(base.length);
+    if(hi>-1){var vari=prodLabel.slice(hi+1).trim();if(vari&&rest.replace(/^[\-\s\.\:]+/,'').indexOf(vari)===0)rest=rest.replace(/^[\-\s\.\:]+/,'').slice(vari.length);}
+  }
+  rest=rest.replace(/^[\-\s\.\:]+/,'').replace(/[\-\s]+$/,'');
+  var label=prodLabel;
+  if(rest)label+='-'+rest;
+  var q=parseInt(sk.qty)||0;
+  if(q>0)label+='-'+q+'\u4e2a';
+  return label;
+}
 function checkSkuNoDuplicate(skuNo,excludePid){for(var i=0;i<spProducts.length;i++){var p=spProducts[i];if(p.id===excludePid)continue;for(var j=0;j<(p.skus||[]).length;j++){if((p.skus[j].skuNo||'')===skuNo)return true;}}return false;}
 function getSkuOrderStats(skuNo){var qty=0,orders=0,rev=0;spOrders.forEach(function(o){if(o.sku===skuNo){orders++;qty+=(o.qty||1);rev+=(o.revenue||0);}});return{orders:orders,qty:qty,rev:rev};}
 function fmtSkuNo(skuNo){return(skuNo||'').replace(/(\d+)x个$/,'$1个');}
@@ -1843,10 +1863,13 @@ function renderSkuSiteCalc(p,sk,si,sid){
   if(baseNum<=0){
     return '<span class="sp-pp-calc empty"><span class="sp-pp-cny">输入原价计算</span></span>';
   }
-  var html='<span class="sp-pp-calc" title="'+s.name+': 原价 '+s.symbol+fmtNum(baseNum)+' → 折后 '+s.symbol+fmtNum(c.finalLocal)+' ('+disc+'%折) ≈¥'+fmtNum(c.finalCny)+' 利润 ¥'+fmtNum(c.profit)+'">';
+  var fees=c.hideCny+c.commCny+c.cost+c.other+c.ad;
+  var feeTip='费用明细（已全部从利润中扣除）：藏价 ¥'+fmtNum(c.hideCny)+' + 佣金('+fmtNum(c.commission)+'%) ¥'+fmtNum(c.commCny)+' + 成本 ¥'+fmtNum(c.cost)+' + 优惠券 ¥'+fmtNum(c.coupon*c.rate)+' + 其它 ¥'+fmtNum(c.other)+' + 广告 ¥'+fmtNum(c.ad)+' = 合计 ¥'+fmtNum(fees);
+  var html='<span class="sp-pp-calc" title="'+s.name+': 原价 '+s.symbol+fmtNum(baseNum)+' → 折后 '+s.symbol+fmtNum(c.finalLocal)+' ('+disc+'%折) ≈¥'+fmtNum(c.finalCny)+'&#10;'+feeTip+'&#10;利润 = 实付 ¥'+fmtNum(c.finalCny)+' - 费用 ¥'+fmtNum(fees)+' = ¥'+fmtNum(c.profit)+'">';
   html+='<span class="sp-pp-final">'+s.symbol+fmtNum(c.finalLocal)+'</span>';
   html+='<span class="sp-pp-cny">≈¥'+fmtNum(c.finalCny)+'</span>';
-  html+='<span class="sp-pp-profit '+profCls+'">'+profSign+'¥'+fmtNum(Math.abs(c.profit))+'</span>';
+  html+='<span class="sp-pp-fees" title="'+escapeAttr(feeTip)+'">-费¥'+fmtNum(fees)+'</span>';
+  html+='<span class="sp-pp-profit '+profCls+'" title="净利 = 实付 - 全部费用">'+profSign+'¥'+fmtNum(Math.abs(c.profit))+'</span>';
   html+='</span>';
   return html;
 }
@@ -1856,19 +1879,8 @@ function renderProductPricePreview(p){
   var skus=p.skus||[];
   if(!skus.length)return '';
   var lines=skus.map(function(sk,si){
-    var skuLabel=sk.name||('规格'+(si+1));
-    var prodLabel=p.name||'';
-    var displaySpec=skuLabel;
-    if(prodLabel){
-      var pn=prodLabel.trim();
-      if(pn&&skuLabel.indexOf(pn)===0){
-        var rest=skuLabel.slice(pn.length).replace(/^[\-\s\.\:]+/,'');
-        if(rest)displaySpec=rest;
-      }
-    }
-    var prodChip='<span class="sp-pp-prod-chip" title="'+escapeAttr(prodLabel||'')+'">'+escapeHtml(prodLabel||'产品')+'</span>';
-    var specChip='<span class="sp-pp-sku-name" title="'+escapeAttr(skuLabel)+'">'+escapeHtml(displaySpec)+'</span>';
-    var qtyChip=(sk.qty&&parseInt(sk.qty)>0)?'<span class="sp-pp-qty-chip">'+parseInt(sk.qty)+'个</span>':'';
+    var skuNoLabel=buildSkuNoLabel(p,sk,si);
+    var skuNoChip='<span class="sp-pp-skuno-chip" title="'+escapeAttr(skuNoLabel)+'">'+escapeHtml(skuNoLabel)+'</span>';
     var siteCells=sites.map(function(s){
       var calcHtml=renderSkuSiteCalc(p,sk,si,s.id);
       var pr=(sk.price&&sk.price[s.id])||{};
@@ -1878,7 +1890,7 @@ function renderProductPricePreview(p){
     }).join('');
     var costVal=sk.cost!=null?String(sk.cost):'';
     var costHtml='<span class="sp-pp-site-block sp-pp-cost-block" onclick="event.stopPropagation()"><span class="sp-pp-cell sp-pp-cost-cell"><b>成本</b><input class="sp-pp-price-in" type="number" inputmode="decimal" step="0.01" min="0" data-sku-cost="'+si+'" value="'+costVal+'" placeholder="0" onclick="event.stopPropagation()" onfocus="event.stopPropagation()">¥</span></span>';
-    return '<div class="sp-pp-sku-line" onclick="event.stopPropagation()">'+prodChip+specChip+qtyChip+costHtml+siteCells+'</div>';
+    return '<div class="sp-pp-sku-line" onclick="event.stopPropagation()">'+skuNoChip+costHtml+siteCells+'</div>';
   }).join('');
   var dateLine='';
   sites.forEach(function(s){
@@ -2252,7 +2264,7 @@ function onProdImgFile(input){var f=input.files&&input.files[0];if(!f)return;if(
 function renderSkuInputs(skus,append){
   var el=$('pfSkus');if(!el)return;
   var prodName=$('pfName')?$('pfName').value.trim():'';
-  var html=skus.map(function(s){var suggested=s.skuNo||'';if(!suggested&&prodName&&s.name)suggested=genSkuNoFrom(prodName,s.name,s.qty);return '<div class="sku-row">'+
+  var prodTitle=($('pfTitle')?$('pfTitle').value.trim():'')||prodName;var html=skus.map(function(s){var suggested=s.skuNo||'';if(!suggested&&prodTitle&&s.name)suggested=genSkuNoFrom(prodTitle,s.name,s.qty);return '<div class="sku-row">'+
     '<input class="input sku-no-input" placeholder="SKU号（保存时自动生成）" value="'+escapeAttr(suggested)+'" data-sku="skuNo" style="flex:1.6;min-width:130px;font-weight:600;color:var(--primary)">'+
     '<input class="input" placeholder="规格（如：白色 M码）" value="'+escapeAttr(s.name||'')+'" data-sku="name" style="flex:1.4;min-width:110px">'+
     '<input class="input" placeholder="英文名" value="'+escapeAttr(s.enName||'')+'" data-sku="enName" style="flex:1;min-width:90px">'+
@@ -2276,7 +2288,7 @@ function saveProduct(){
   rows.forEach(function(r){
     var sk={skuNo:r.querySelector('[data-sku=skuNo]').value.trim(),name:r.querySelector('[data-sku=name]').value.trim(),enName:r.querySelector('[data-sku=enName]').value.trim(),qty:parseInt(r.querySelector('[data-sku=qty]').value)||0,cost:parseFloat(r.querySelector('[data-sku=cost]').value)||0,weight:parseFloat(r.querySelector('[data-sku=weight]').value)||0};
     if(!(sk.name||sk.cost||sk.enName||sk.qty))return;
-    if(!sk.skuNo)sk.skuNo=genSkuNoFrom(name,sk.name,sk.qty);
+    if(!sk.skuNo)sk.skuNo=genSkuNoFrom(p.title||name,sk.name,sk.qty);
     if(checkSkuNoDuplicate(sk.skuNo,editingProductId)){dupWarns.push(sk.skuNo);}
     sk.price=oldPriceMap[sk.skuNo]||{};
     p.skus.push(sk);
@@ -2315,7 +2327,7 @@ function importProducts(){
     var disc={};if(discPH)disc.ph=discPH;if(discSG)disc.sg=discSG;
     var skus=[];
     if(cost||weight||skuName!=='默认'||skuEnName){
-      skus.push({skuNo:genSkuNoFrom(name,skuName,skuQty),name:skuName,enName:skuEnName,qty:skuQty,cost:cost,weight:weight});
+      skus.push({skuNo:genSkuNoFrom(title||name,skuName,skuQty),name:skuName,enName:skuEnName,qty:skuQty,cost:cost,weight:weight});
     }
     spProducts.push({id:genId(),name:name,title:title,category:category,status:status,supplier:supplier,link:link,shipFrom:shipFrom,img:'',listed:listed,disc:disc,skus:skus});
     n++;

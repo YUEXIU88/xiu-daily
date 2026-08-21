@@ -1,1 +1,1 @@
-{"v":80,"version":80,"forceUpdate":true,"note":"v80: SKU 行名称拆为「产品名 chip+规格 chip+数量 chip X个」，自动剥产品名前缀"}
+{"v":81,"version":81,"forceUpdate":true,"note":"v81: SKU号统一规则「标题-规格-数量个」；利润气泡显示费用明细（藏价/佣金/优惠券/成本）"}
